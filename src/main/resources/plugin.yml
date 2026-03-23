@@ -1,0 +1,16 @@
+name: ArisAuction
+version: 1.0
+main: me.vennlmao.arisauction.ArisAuction
+api-version: 1.20
+author: VennLMAO
+description: Hệ thống đấu giá chuyên nghiệp cho Aris Network
+
+folia-supported: true
+
+depend:
+  - Vault
+
+commands:
+  ah:
+    description: Lệnh chính để mở menu đấu giá
+    aliases: [auction, auctionhouse, hd]
