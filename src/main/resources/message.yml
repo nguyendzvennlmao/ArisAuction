@@ -15,12 +15,12 @@ no-item:
   chat: true
   actionbar: false
 
+invalid-price:
+  text: "%prefix%&cGiá bán không hợp lệ!"
+  chat: true
+  actionbar: false
+
 inventory-full:
   text: "%prefix%&cTúi đồ của bạn đã đầy!"
   chat: true
   actionbar: true
-
-not-enough-money:
-  text: "%prefix%&cBạn không đủ tiền để mua vật phẩm này!"
-  chat: true
-  actionbar: false
