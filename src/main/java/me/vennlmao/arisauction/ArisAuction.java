@@ -6,6 +6,7 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -35,10 +36,7 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
 
     @Override
     public void onEnable() {
-        if (!setupEconomy()) {
-            getServer().getPluginManager().disablePlugin(this);
-            return;
-        }
+        setupEconomy();
         loadFiles();
         getCommand("ah").setExecutor(this);
         getServer().getPluginManager().registerEvents(this, this);
@@ -46,20 +44,16 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
 
     private void loadFiles() {
         saveDefaultConfig();
-        File guiFile = new File(getDataFolder(), "gui.yml");
-        File msgFile = new File(getDataFolder(), "message.yml");
-        if (!guiFile.exists()) saveResource("gui.yml", false);
-        if (!msgFile.exists()) saveResource("message.yml", false);
-        guiCfg = YamlConfiguration.loadConfiguration(guiFile);
-        msgCfg = YamlConfiguration.loadConfiguration(msgFile);
+        guiCfg = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "gui.yml"));
+        msgCfg = YamlConfiguration.loadConfiguration(new File(getDataFolder(), "message.yml"));
     }
 
-    private boolean setupEconomy() {
-        if (getServer().getPluginManager().getPlugin("Vault") == null) return false;
+    private void setupEconomy() {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) return;
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) return false;
-        econ = rsp.getProvider();
-        return econ != null;
+        if (rsp != null) {
+            econ = rsp.getProvider();
+        }
     }
 
     public String color(String msg) {
@@ -72,99 +66,138 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         return ChatColor.translateAlternateColorCodes('&', matcher.appendTail(sb).toString());
     }
 
-    private void sendMessage(Player player, String path, String... replacements) {
-        String raw = msgCfg.getString(path);
-        if (raw == null) return;
-        String prefix = msgCfg.getString("prefix", "");
-        String message = raw.replace("%prefix%", prefix);
-        for (int i = 0; i < replacements.length; i += 2) {
-            message = message.replace(replacements[i], replacements[i+1]);
+    private void playSound(Player player, String type) {
+        String soundName = guiCfg.getString("sounds." + type);
+        if (soundName != null) {
+            player.playSound(player.getLocation(), Sound.valueOf(soundName), 1.0f, 1.0f);
         }
-        String colored = color(message);
-        if (msgCfg.getBoolean("chat", true)) player.sendMessage(colored);
-        if (msgCfg.getBoolean("actionbar", true)) player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(colored));
+    }
+
+    private void sendMessage(Player player, String path, String item, String price) {
+        String rawMsg = msgCfg.getString(path);
+        if (rawMsg == null) return;
+        
+        String prefix = msgCfg.getString("prefix", "");
+        String formatted = rawMsg.replace("%prefix%", prefix);
+        if (item != null) formatted = formatted.replace("%item%", item);
+        if (price != null) formatted = formatted.replace("%price%", price);
+        
+        String colored = color(formatted);
+        if (msgCfg.getBoolean("chat")) player.sendMessage(colored);
+        if (msgCfg.getBoolean("actionbar")) {
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(colored));
+        }
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!(sender instanceof Player player)) return true;
         if (args.length > 0 && args[0].equalsIgnoreCase("sell")) {
-            if (args.length < 2) return false;
-            handleSell(player, args[1]);
+            handleSell(player, args.length > 1 ? args[1] : "0");
             return true;
         }
-        openAuctionGUI(player);
+        openMainGUI(player, "recently_listed", "all");
         return true;
     }
 
-    private void handleSell(Player player, String priceStr) {
+    private void handleSell(Player player, String price) {
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() == Material.AIR) {
-            sendMessage(player, "no-item-in-hand");
+            playSound(player, "error");
+            sendMessage(player, "no-item-in-hand", null, null);
             return;
         }
-        try {
-            double price = Double.parseDouble(priceStr);
-            sendMessage(player, "sell-success", "%item%", item.getType().name(), "%price%", priceStr);
-            player.getInventory().setItemInMainHand(null);
-        } catch (Exception e) {
-            sendMessage(player, "invalid-price");
-        }
+        playSound(player, "success");
+        sendMessage(player, "sell-success", item.getType().name(), price);
+        player.getInventory().setItemInMainHand(null);
     }
 
-    public void openAuctionGUI(Player player) {
-        int rows = guiCfg.getInt("rows", 6);
-        String title = color(guiCfg.getString("menu-title").replace("%page%", "1"));
-        Inventory inv = Bukkit.createInventory(null, rows * 9, title);
-
-        loadButtons(inv);
-
+    public void openMainGUI(Player player, String sort, String filter) {
+        playSound(player, "open-menu");
+        Inventory inv = Bukkit.createInventory(null, 54, color(guiCfg.getString("menu-title").replace("%page%", "1")));
+        inv.setItem(guiCfg.getInt("buttons.my-auctions.slot"), createSimpleItem("buttons.my-auctions"));
+        inv.setItem(guiCfg.getInt("sort.slot"), createSelectionItem("sort", sort));
+        inv.setItem(guiCfg.getInt("filter.slot"), createSelectionItem("filter", filter));
         player.getScheduler().execute(this, () -> player.openInventory(inv), null, 0L);
     }
 
-    private void loadButtons(Inventory inv) {
-        if (guiCfg.contains("buttons")) {
-            for (String key : guiCfg.getConfigurationSection("buttons").getKeys(false)) {
-                String path = "buttons." + key;
-                inv.setItem(guiCfg.getInt(path + ".slot"), createSimpleItem(path));
-            }
-        }
-        inv.setItem(guiCfg.getInt("sort.slot"), createSelectionItem("sort", "recently_listed"));
-        inv.setItem(guiCfg.getInt("filter.slot"), createSelectionItem("filter", "all"));
+    public void openConfirmGUI(Player player, ItemStack item) {
+        playSound(player, "click");
+        Inventory inv = Bukkit.createInventory(null, 27, color(guiCfg.getString("confirm-title")));
+        inv.setItem(guiCfg.getInt("confirm-gui.cancel.slot"), createSimpleItem("confirm-gui.cancel"));
+        inv.setItem(guiCfg.getInt("confirm-gui.accept.slot"), createSimpleItem("confirm-gui.accept"));
+        inv.setItem(guiCfg.getInt("confirm-gui.info-slot"), item);
+        player.getScheduler().execute(this, () -> player.openInventory(inv), null, 0L);
     }
 
     private ItemStack createSimpleItem(String path) {
-        Material mat = Material.valueOf(guiCfg.getString(path + ".material"));
+        Material mat = Material.valueOf(guiCfg.getString(path + ".material", "STONE"));
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(color(guiCfg.getString(path + ".name")));
-        item.setItemMeta(meta);
+        if (meta != null) {
+            meta.setDisplayName(color(guiCfg.getString(path + ".name")));
+            item.setItemMeta(meta);
+        }
         return item;
     }
 
-    private ItemStack createSelectionItem(String type, String activeKey) {
-        Material mat = Material.valueOf(guiCfg.getString(type + ".material"));
+    private ItemStack createSelectionItem(String type, String active) {
+        Material mat = Material.valueOf(guiCfg.getString(type + ".material", "STONE"));
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(color(guiCfg.getString(type + ".name")));
-        List<String> lore = new ArrayList<>();
-        String activeP = guiCfg.getString(type + ".active_prefix");
-        String inactiveP = guiCfg.getString(type + ".inactive_prefix");
-        for (String key : guiCfg.getConfigurationSection(type + ".options").getKeys(false)) {
-            String prefix = key.equals(activeKey) ? activeP : inactiveP;
-            lore.add(color(prefix + guiCfg.getString(type + ".options." + key)));
+        if (meta != null) {
+            meta.setDisplayName(color(guiCfg.getString(type + ".name")));
+            List<String> lore = new ArrayList<>();
+            if (guiCfg.getConfigurationSection(type + ".options") != null) {
+                for (String key : guiCfg.getConfigurationSection(type + ".options").getKeys(false)) {
+                    String prefix = key.equals(active) ? guiCfg.getString(type + ".active_prefix") : guiCfg.getString(type + ".inactive_prefix");
+                    lore.add(color(prefix + guiCfg.getString(type + ".options." + key)));
+                }
+            }
+            meta.setLore(lore);
+            item.setItemMeta(meta);
         }
-        meta.setLore(lore);
-        item.setItemMeta(meta);
         return item;
     }
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
+    public void onClick(InventoryClickEvent event) {
         if (event.getClickedInventory() == null) return;
-        String configTitle = ChatColor.stripColor(color(guiCfg.getString("menu-title").split("\\|")[0].trim()));
-        if (ChatColor.stripColor(event.getView().getTitle()).contains(configTitle)) {
+        Player p = (Player) event.getWhoClicked();
+        String title = ChatColor.stripColor(event.getView().getTitle());
+
+        if (title.contains("Auction House")) {
             event.setCancelled(true);
+            if (event.getRawSlot() == guiCfg.getInt("buttons.my-auctions.slot")) {
+                Inventory inv = Bukkit.createInventory(null, 54, color(guiCfg.getString("my-auctions-title")));
+                inv.setItem(guiCfg.getInt("buttons.back.slot"), createSimpleItem("buttons.back"));
+                p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
+            } else if (event.getRawSlot() < 45 && event.getCurrentItem() != null) {
+                openConfirmGUI(p, event.getCurrentItem());
+            }
+        } else if (title.contains("Confirm Purchase")) {
+            event.setCancelled(true);
+            if (event.getRawSlot() == guiCfg.getInt("confirm-gui.cancel.slot")) {
+                playSound(p, "click");
+                openMainGUI(p, "recently_listed", "all");
+            } else if (event.getRawSlot() == guiCfg.getInt("confirm-gui.accept.slot")) {
+                if (p.getInventory().firstEmpty() == -1) {
+                    playSound(p, "error");
+                    sendMessage(p, "inventory-full", null, null);
+                    return;
+                }
+                playSound(p, "success");
+                ItemStack bought = event.getInventory().getItem(13);
+                if (bought != null) p.getInventory().addItem(bought);
+                p.closeInventory();
+                sendMessage(p, "buy-success", "Item", "1000");
+            }
+        } else if (title.contains("Your Auctions")) {
+            event.setCancelled(true);
+            if (event.getRawSlot() == guiCfg.getInt("buttons.back.slot")) {
+                playSound(p, "click");
+                openMainGUI(p, "recently_listed", "all");
+            }
         }
     }
-                                                                              }
+}
