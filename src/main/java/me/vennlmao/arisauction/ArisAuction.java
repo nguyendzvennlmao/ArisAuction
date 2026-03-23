@@ -17,10 +17,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,12 +81,8 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
             message = message.replace(replacements[i], replacements[i+1]);
         }
         String colored = color(message);
-        if (msgCfg.getBoolean("chat", true)) {
-            player.sendMessage(colored);
-        }
-        if (msgCfg.getBoolean("actionbar", true)) {
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(colored));
-        }
+        if (msgCfg.getBoolean("chat", true)) player.sendMessage(colored);
+        if (msgCfg.getBoolean("actionbar", true)) player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(colored));
     }
 
     @Override
@@ -114,9 +113,50 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
     }
 
     public void openAuctionGUI(Player player) {
+        int rows = guiCfg.getInt("rows", 6);
         String title = color(guiCfg.getString("menu-title").replace("%page%", "1"));
-        Inventory inv = Bukkit.createInventory(null, 54, title);
+        Inventory inv = Bukkit.createInventory(null, rows * 9, title);
+
+        loadButtons(inv);
+
         player.getScheduler().execute(this, () -> player.openInventory(inv), null, 0L);
+    }
+
+    private void loadButtons(Inventory inv) {
+        if (guiCfg.contains("buttons")) {
+            for (String key : guiCfg.getConfigurationSection("buttons").getKeys(false)) {
+                String path = "buttons." + key;
+                inv.setItem(guiCfg.getInt(path + ".slot"), createSimpleItem(path));
+            }
+        }
+        inv.setItem(guiCfg.getInt("sort.slot"), createSelectionItem("sort", "recently_listed"));
+        inv.setItem(guiCfg.getInt("filter.slot"), createSelectionItem("filter", "all"));
+    }
+
+    private ItemStack createSimpleItem(String path) {
+        Material mat = Material.valueOf(guiCfg.getString(path + ".material"));
+        ItemStack item = new ItemStack(mat);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(color(guiCfg.getString(path + ".name")));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack createSelectionItem(String type, String activeKey) {
+        Material mat = Material.valueOf(guiCfg.getString(type + ".material"));
+        ItemStack item = new ItemStack(mat);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(color(guiCfg.getString(type + ".name")));
+        List<String> lore = new ArrayList<>();
+        String activeP = guiCfg.getString(type + ".active_prefix");
+        String inactiveP = guiCfg.getString(type + ".inactive_prefix");
+        for (String key : guiCfg.getConfigurationSection(type + ".options").getKeys(false)) {
+            String prefix = key.equals(activeKey) ? activeP : inactiveP;
+            lore.add(color(prefix + guiCfg.getString(type + ".options." + key)));
+        }
+        meta.setLore(lore);
+        item.setItemMeta(meta);
+        return item;
     }
 
     @EventHandler
@@ -127,4 +167,4 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
             event.setCancelled(true);
         }
     }
-}
+                                                                              }
