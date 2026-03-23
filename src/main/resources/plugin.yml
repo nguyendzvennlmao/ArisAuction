@@ -7,4 +7,3 @@ folia-supported: true
 commands:
   ah:
     aliases: [auction]
-    description: Open the auction house menu
