@@ -18,54 +18,45 @@ auction:
     slot: 51
     material: CHEST
     name: "&#00fc88ʏᴏᴜʀ ɪᴛᴇᴍꜱ"
-  sort:
-    slot: 47
-    material: CAULDRON
-    name: "&#00fc88ꜱᴏʀᴛ"
   filter:
-    slot: 48
+    slot: 47
     material: HOPPER
-    name: "&#00fc88ꜰɪʟᴛᴇʀ"
+    name: "&#facc15ꜰɪʟᴛᴇʀ"
     active_prefix: "&#00fc88● "
-    inactive_prefix: "&f● "
-    keys: 
-      - all
-      - blocks
-      - tools
-      - combat
-      - food
+    inactive_prefix: "&7○ "
+    keys:
+      - ALL
+      - BLOCKS
+      - TOOLS
+      - COMBAT
+      - FOOD
     options:
-      - "Tất cả"
-      - "Khối vuông"
-      - "Công cụ"
-      - "Chiến đấu"
-      - "Đồ ăn"
+      - Tất cả
+      - Khối vuông
+      - Công cụ
+      - Chiến đấu
+      - Đồ ăn
 
 youritem:
-  title: "&8ᴀᴜᴄᴛɪᴏɴ -> Your Items"
+  title: "&8ʏᴏᴜʀ ɪᴛᴇᴍꜱ"
   size: 27
-  slots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+  slots: [10, 11, 12, 13, 14, 15, 16]
   info:
     slot: 0
     material: PAPER
-    name: "&#00fc88Sell Item"
+    name: "&#00fc88Cách bán đồ"
   transactions:
     slot: 26
     material: WRITABLE_BOOK
     name: "&#00fc88ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
 
-confirmbuy:
-  title: "&8ᴄᴏɴꜰɪʀᴍ ᴘᴜʀᴄʜᴀꜱᴇ"
-  size: 27
-  confirm:
-    slot: 15
-    material: LIME_STAINED_GLASS_PANE
-    name: "&#04fc04ᴄᴏɴғɪʀᴍ"
-  cancel:
-    slot: 11
-    material: RED_STAINED_GLASS_PANE
-    name: "&#fc0404ᴄᴀɴᴄᴇʟ"
-  item-slot: 13
+transauction:
+  title: "&8ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
+  size: 54
+  back:
+    slot: 49
+    material: ARROW
+    name: "&cQuay lại"
 
 confirmsell:
   title: "&8ᴄᴏɴꜰɪʀᴍ ʟɪꜱᴛɪɴɢ"
@@ -79,11 +70,3 @@ confirmsell:
     material: RED_STAINED_GLASS_PANE
     name: "&#fc0404ᴄᴀɴᴄᴇʟ"
   item-slot: 13
-
-transauction:
-  title: "&8ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
-  size: 54
-  back:
-    slot: 49
-    material: ARROW
-    name: "&cBack to Menu"
