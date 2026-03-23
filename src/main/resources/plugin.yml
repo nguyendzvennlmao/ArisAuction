@@ -1,9 +1,0 @@
-name: ArisAuction
-version: 1.0
-main: me.vennlmao.arisauction.ArisAuction
-api-version: 1.20
-depend: [Vault]
-folia-supported: true
-commands:
-  ah:
-    aliases: [auction]
