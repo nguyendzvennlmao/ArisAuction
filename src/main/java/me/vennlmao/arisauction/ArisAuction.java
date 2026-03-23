@@ -10,6 +10,7 @@ import org.bukkit.Sound;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -21,25 +22,32 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.io.BukkitObjectInputStream;
+import org.bukkit.util.io.BukkitObjectOutputStream;
 
-import java.io.File;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.sql.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor {
+public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor, TabCompleter {
 
     private static Economy econ = null;
     private FileConfiguration guiCfg, msgCfg;
+    private Connection connection;
     private final Pattern HEX = Pattern.compile("&#([A-Fa-f0-9]{6})");
-    private final Map<UUID, String> playerFilter = new HashMap<>();
+    private final Map<UUID, Double> pendingPrice = new HashMap<>();
 
     @Override
     public void onEnable() {
         setupEconomy();
         saveDefaultConfig();
         loadFiles();
+        setupDatabase();
         getCommand("ah").setExecutor(this);
+        getCommand("ah").setTabCompleter(this);
         getServer().getPluginManager().registerEvents(this, this);
     }
 
@@ -57,25 +65,36 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         if (rsp != null) econ = rsp.getProvider();
     }
 
+    private void setupDatabase() {
+        String host = getConfig().getString("mysql.host");
+        int port = getConfig().getInt("mysql.port");
+        String db = getConfig().getString("mysql.database");
+        String user = getConfig().getString("mysql.username");
+        String pass = getConfig().getString("mysql.password");
+        try {
+            connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db, user, pass);
+            Statement s = connection.createStatement();
+            s.execute("CREATE TABLE IF NOT EXISTS aris_auction (id INT AUTO_INCREMENT PRIMARY KEY, seller VARCHAR(36), item LONGTEXT, price DOUBLE, time LONG)");
+            s.execute("CREATE TABLE IF NOT EXISTS aris_history (id INT AUTO_INCREMENT PRIMARY KEY, player VARCHAR(36), type VARCHAR(10), amount DOUBLE, time LONG)");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public String color(String msg) {
         if (msg == null) return "";
         Matcher m = HEX.matcher(msg);
         StringBuilder sb = new StringBuilder();
-        while (m.find()) {
-            m.appendReplacement(sb, ChatColor.of("#" + m.group(1)).toString());
-        }
+        while (m.find()) m.appendReplacement(sb, ChatColor.of("#" + m.group(1)).toString());
         return ChatColor.translateAlternateColorCodes('&', m.appendTail(sb).toString());
     }
 
     private void sendMsg(Player p, String key, String item, String price) {
         if (!msgCfg.contains(key)) return;
-        String raw = msgCfg.getString(key + ".text")
-                .replace("%prefix%", msgCfg.getString("prefix", ""))
-                .replace("%item%", item != null ? item : "")
-                .replace("%price%", price != null ? price : "");
-        String formatted = color(raw);
-        if (msgCfg.getBoolean(key + ".chat")) p.sendMessage(formatted);
-        if (msgCfg.getBoolean(key + ".actionbar")) p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(formatted));
+        String raw = msgCfg.getString(key + ".text").replace("%prefix%", msgCfg.getString("prefix", "")).replace("%item%", item != null ? item : "").replace("%price%", price != null ? price : "");
+        String f = color(raw);
+        if (msgCfg.getBoolean(key + ".chat")) p.sendMessage(f);
+        if (msgCfg.getBoolean(key + ".actionbar")) p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(f));
     }
 
     private void play(Player p, String t) {
@@ -85,48 +104,57 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (sender instanceof Player p) openMain(p, 1);
+        if (!(sender instanceof Player p)) return true;
+        if (args.length >= 2 && args[0].equalsIgnoreCase("sell")) {
+            try {
+                double price = Double.parseDouble(args[1]);
+                ItemStack hand = p.getInventory().getItemInMainHand();
+                if (hand.getType() == Material.AIR) { sendMsg(p, "no-item", null, null); return true; }
+                pendingPrice.put(p.getUniqueId(), price);
+                openConfirmSell(p, hand, price);
+            } catch (NumberFormatException e) { sendMsg(p, "invalid-price", null, null); }
+            return true;
+        }
+        openMain(p, 1);
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender s, Command c, String a, String[] args) {
+        if (args.length == 1) return Collections.singletonList("sell");
+        if (args.length == 2 && args[0].equalsIgnoreCase("sell")) return Collections.singletonList("<price>");
+        return Collections.emptyList();
     }
 
     public void openMain(Player p, int page) {
         play(p, "open-menu");
-        String title = color(guiCfg.getString("auction.title").replace("%current_page%", String.valueOf(page)));
-        Inventory inv = Bukkit.createInventory(null, guiCfg.getInt("auction.size"), title);
+        Inventory inv = Bukkit.createInventory(null, guiCfg.getInt("auction.size"), color(guiCfg.getString("auction.title").replace("%current_page%", String.valueOf(page))));
         setBtn(inv, "auction.previous");
         setBtn(inv, "auction.refresh");
         setBtn(inv, "auction.next");
         setBtn(inv, "auction.my-items");
-        setBtn(inv, "auction.sort");
-        setFilterBtn(inv, p);
         p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
     }
 
-    private void setFilterBtn(Inventory inv, Player p) {
-        String path = "auction.filter";
-        String current = playerFilter.getOrDefault(p.getUniqueId(), "all");
-        ItemStack i = new ItemStack(Material.valueOf(guiCfg.getString(path + ".material")));
-        ItemMeta m = i.getItemMeta();
-        m.setDisplayName(color(guiCfg.getString(path + ".name")));
+    public void openConfirmSell(Player p, ItemStack item, double price) {
+        String type = "confirmsell";
+        Inventory inv = Bukkit.createInventory(null, guiCfg.getInt(type + ".size"), color(guiCfg.getString(type + ".title")));
+        setBtn(inv, type + ".confirm");
+        setBtn(inv, type + ".cancel");
+        ItemStack d = item.clone();
+        ItemMeta m = d.getItemMeta();
         List<String> lore = new ArrayList<>();
-        List<String> keys = guiCfg.getStringList(path + ".keys");
-        List<String> opts = guiCfg.getStringList(path + ".options");
-        for (int j = 0; j < keys.size(); j++) {
-            String pre = keys.get(j).equals(current) ? guiCfg.getString(path + ".active_prefix") : guiCfg.getString(path + ".inactive_prefix");
-            lore.add(color(pre + opts.get(j)));
-        }
+        for (String s : getConfig().getStringList("auction.item-lore")) lore.add(color(s.replace("%seller%", p.getName()).replace("%price%", String.valueOf(price)).replace("%time%", "24h")));
         m.setLore(lore);
-        i.setItemMeta(m);
-        inv.setItem(guiCfg.getInt(path + ".slot"), i);
+        d.setItemMeta(m);
+        inv.setItem(guiCfg.getInt(type + ".item-slot"), d);
+        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
     }
 
     private void setBtn(Inventory inv, String path) {
         ItemStack i = new ItemStack(Material.valueOf(guiCfg.getString(path + ".material", "STONE")));
         ItemMeta m = i.getItemMeta();
-        if (m != null) {
-            m.setDisplayName(color(guiCfg.getString(path + ".name")));
-            i.setItemMeta(m);
-        }
+        if (m != null) { m.setDisplayName(color(guiCfg.getString(path + ".name"))); i.setItemMeta(m); }
         inv.setItem(guiCfg.getInt(path + ".slot"), i);
     }
 
@@ -135,49 +163,40 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         if (e.getClickedInventory() == null) return;
         Player p = (Player) e.getWhoClicked();
         String t = ChatColor.stripColor(e.getView().getTitle());
-        if (t.contains("ᴀᴜᴄᴛɪᴏɴ (Page")) {
+        if (t.contains("ᴀᴜᴄᴛɪᴏɴ (Page")) e.setCancelled(true);
+        if (t.contains("ᴄᴏɴꜰɪʀᴍ ʟɪꜱᴛɪɴɢ")) {
             e.setCancelled(true);
-            int slot = e.getRawSlot();
-            if (slot == guiCfg.getInt("auction.my-items.slot")) openGui(p, "youritem");
-            else if (slot == guiCfg.getInt("auction.filter.slot")) cycleFilter(p);
-            else if (slot < 45 && e.getCurrentItem() != null) openConfirm(p, e.getCurrentItem(), "confirmbuy");
-        } else if (t.contains("Your Items")) {
-            e.setCancelled(true);
-            if (guiCfg.getIntegerList("youritem.slots").contains(e.getRawSlot()) && e.getCurrentItem() != null) {
-                if (p.getInventory().firstEmpty() == -1) { sendMsg(p, "inventory-full", null, null); return; }
-                ItemStack item = e.getCurrentItem().clone();
-                e.getClickedInventory().setItem(e.getRawSlot(), null);
-                p.getInventory().addItem(item);
-                play(p, "success");
+            if (e.getRawSlot() == guiCfg.getInt("confirmsell.confirm.slot")) {
+                ItemStack item = p.getInventory().getItemInMainHand();
+                if (item.getType() != Material.AIR) {
+                    double price = pendingPrice.getOrDefault(p.getUniqueId(), 0.0);
+                    saveToDB(p, item, price);
+                    p.getInventory().setItemInMainHand(null);
+                    p.closeInventory();
+                    sendMsg(p, "sell-success", item.getType().name(), String.valueOf(price));
+                    play(p, "success");
+                    pendingPrice.remove(p.getUniqueId());
+                }
+            } else if (e.getRawSlot() == guiCfg.getInt("confirmsell.cancel.slot")) {
+                p.closeInventory();
+                pendingPrice.remove(p.getUniqueId());
             }
         }
     }
 
-    private void cycleFilter(Player p) {
-        List<String> keys = guiCfg.getStringList("auction.filter.keys");
-        String current = playerFilter.getOrDefault(p.getUniqueId(), "all");
-        int next = (keys.indexOf(current) + 1) % keys.size();
-        playerFilter.put(p.getUniqueId(), keys.get(next));
-        play(p, "click");
-        openMain(p, 1);
+    private void saveToDB(Player p, ItemStack item, double price) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            BukkitObjectOutputStream dataStream = new BukkitObjectOutputStream(outputStream);
+            dataStream.writeObject(item);
+            dataStream.close();
+            String base64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO aris_auction (seller, item, price, time) VALUES (?, ?, ?, ?)");
+            ps.setString(1, p.getUniqueId().toString());
+            ps.setString(2, base64);
+            ps.setDouble(3, price);
+            ps.setLong(4, System.currentTimeMillis());
+            ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
     }
-
-    public void openGui(Player p, String type) {
-        play(p, "open-menu");
-        Inventory inv = Bukkit.createInventory(null, guiCfg.getInt(type + ".size"), color(guiCfg.getString(type + ".title")));
-        if (guiCfg.getConfigurationSection(type) != null) {
-            for (String key : guiCfg.getConfigurationSection(type).getKeys(false)) {
-                if (guiCfg.contains(type + "." + key + ".slot")) setBtn(inv, type + "." + key);
             }
-        }
-        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
-    }
-
-    public void openConfirm(Player p, ItemStack item, String type) {
-        Inventory inv = Bukkit.createInventory(null, guiCfg.getInt(type + ".size"), color(guiCfg.getString(type + ".title")));
-        setBtn(inv, type + ".confirm");
-        setBtn(inv, type + ".cancel");
-        inv.setItem(guiCfg.getInt(type + ".item-slot"), item);
-        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
-    }
-  }
