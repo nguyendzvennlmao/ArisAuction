@@ -1,0 +1,10 @@
+prefix: "&#facc15&l[AUCTION] &r"
+buy-success: "%prefix%&fBạn đã mua thành công &e%item% &fvới giá &a%price%$"
+not-enough-money: "%prefix%&cBạn không đủ tiền để thực hiện giao dịch này!"
+invalid-price: "%prefix%&cGiá bán không hợp lệ!"
+no-item-in-hand: "%prefix%&cBạn phải cầm vật phẩm trên tay để bán!"
+sell-success: "%prefix%&fĐã đăng bán &e%item% &fvới giá &a%price%$"
+search-no-result: "%prefix%&7Không tìm thấy vật phẩm nào cho: &f%search%"
+
+chat: true
+actionbar: true
