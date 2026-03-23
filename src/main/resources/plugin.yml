@@ -1,0 +1,16 @@
+name: ArisAuction
+version: 1.0
+main: me.vennlmao.arisauction.ArisAuction
+api-version: 1.20
+author: VennLMAO
+description: Aris Network Auction System
+depend: [Vault]
+commands:
+  ah:
+    description: Auction command
+    usage: /ah [sell <price>]
+    aliases: [auction, market]
+permissions:
+  arisauction.use:
+    description: Use ah command
+    default: true
