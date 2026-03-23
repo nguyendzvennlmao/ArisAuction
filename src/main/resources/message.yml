@@ -1,10 +1,11 @@
 prefix: "&#facc15&l[AUCTION] &r"
-buy-success: "%prefix%&fBạn đã mua thành công &e%item% &fvới giá &a%price%$"
-not-enough-money: "%prefix%&cBạn không đủ tiền để thực hiện giao dịch này!"
-invalid-price: "%prefix%&cGiá bán không hợp lệ!"
-no-item-in-hand: "%prefix%&cBạn phải cầm vật phẩm trên tay để bán!"
 sell-success: "%prefix%&fĐã đăng bán &e%item% &fvới giá &a%price%$"
-search-no-result: "%prefix%&7Không tìm thấy vật phẩm nào cho: &f%search%"
+no-item-in-hand: "%prefix%&cBạn phải cầm vật phẩm trên tay!"
+invalid-price: "%prefix%&cGiá bán không hợp lệ!"
+inventory-full: "%prefix%&cTúi đồ đã đầy, không thể nhận vật phẩm!"
+take-back-success: "%prefix%&fBạn đã lấy lại vật phẩm thành công!"
+not-enough-money: "%prefix%&cBạn không đủ tiền để mua vật phẩm này!"
+buy-success: "%prefix%&aBạn đã mua thành công &e%item% &fvới giá &6%price%$"
 
 chat: true
 actionbar: true
