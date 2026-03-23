@@ -39,6 +39,7 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
     private Connection connection;
     private final Pattern HEX = Pattern.compile("&#([A-Fa-f0-9]{6})");
     private final Map<UUID, Double> pendingPrice = new HashMap<>();
+    private final Map<UUID, String> playerFilter = new HashMap<>();
 
     @Override
     public void onEnable() {
@@ -72,13 +73,11 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         String user = getConfig().getString("mysql.username");
         String pass = getConfig().getString("mysql.password");
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db, user, pass);
+            connection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port + "/" + db + "?useSSL=false", user, pass);
             Statement s = connection.createStatement();
-            s.execute("CREATE TABLE IF NOT EXISTS aris_auction (id INT AUTO_INCREMENT PRIMARY KEY, seller VARCHAR(36), item LONGTEXT, price DOUBLE, time LONG)");
-            s.execute("CREATE TABLE IF NOT EXISTS aris_history (id INT AUTO_INCREMENT PRIMARY KEY, player VARCHAR(36), type VARCHAR(10), amount DOUBLE, time LONG)");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            s.execute("CREATE TABLE IF NOT EXISTS aris_auction (id INT AUTO_INCREMENT PRIMARY KEY, seller VARCHAR(36), item LONGTEXT, price DOUBLE, category VARCHAR(20), time LONG)");
+            s.execute("CREATE TABLE IF NOT EXISTS aris_trans (id INT AUTO_INCREMENT PRIMARY KEY, player VARCHAR(36), msg TEXT, time LONG)");
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public String color(String msg) {
@@ -133,6 +132,7 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         setBtn(inv, "auction.refresh");
         setBtn(inv, "auction.next");
         setBtn(inv, "auction.my-items");
+        setFilterBtn(inv, p);
         p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
     }
 
@@ -151,6 +151,24 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
     }
 
+    private void setFilterBtn(Inventory inv, Player p) {
+        String path = "auction.filter";
+        String current = playerFilter.getOrDefault(p.getUniqueId(), "ALL");
+        ItemStack i = new ItemStack(Material.valueOf(guiCfg.getString(path + ".material")));
+        ItemMeta m = i.getItemMeta();
+        m.setDisplayName(color(guiCfg.getString(path + ".name")));
+        List<String> lore = new ArrayList<>();
+        List<String> keys = guiCfg.getStringList(path + ".keys");
+        List<String> opts = guiCfg.getStringList(path + ".options");
+        for (int j = 0; j < keys.size(); j++) {
+            String pre = keys.get(j).equals(current) ? guiCfg.getString(path + ".active_prefix") : guiCfg.getString(path + ".inactive_prefix");
+            lore.add(color(pre + opts.get(j)));
+        }
+        m.setLore(lore);
+        i.setItemMeta(m);
+        inv.setItem(guiCfg.getInt(path + ".slot"), i);
+    }
+
     private void setBtn(Inventory inv, String path) {
         ItemStack i = new ItemStack(Material.valueOf(guiCfg.getString(path + ".material", "STONE")));
         ItemMeta m = i.getItemMeta();
@@ -163,7 +181,11 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         if (e.getClickedInventory() == null) return;
         Player p = (Player) e.getWhoClicked();
         String t = ChatColor.stripColor(e.getView().getTitle());
-        if (t.contains("ᴀᴜᴄᴛɪᴏɴ (Page")) e.setCancelled(true);
+        if (t.contains("ᴀᴜᴄᴛɪᴏɴ (Page")) {
+            e.setCancelled(true);
+            if (e.getRawSlot() == guiCfg.getInt("auction.filter.slot")) cycleFilter(p);
+            if (e.getRawSlot() == guiCfg.getInt("auction.my-items.slot")) openGui(p, "youritem");
+        }
         if (t.contains("ᴄᴏɴꜰɪʀᴍ ʟɪꜱᴛɪɴɢ")) {
             e.setCancelled(true);
             if (e.getRawSlot() == guiCfg.getInt("confirmsell.confirm.slot")) {
@@ -175,13 +197,35 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
                     p.closeInventory();
                     sendMsg(p, "sell-success", item.getType().name(), String.valueOf(price));
                     play(p, "success");
-                    pendingPrice.remove(p.getUniqueId());
                 }
-            } else if (e.getRawSlot() == guiCfg.getInt("confirmsell.cancel.slot")) {
-                p.closeInventory();
-                pendingPrice.remove(p.getUniqueId());
-            }
+            } else if (e.getRawSlot() == guiCfg.getInt("confirmsell.cancel.slot")) p.closeInventory();
         }
+        if (t.contains("ʏᴏᴜʀ ɪᴛᴇᴍꜱ")) {
+            e.setCancelled(true);
+            if (e.getRawSlot() == guiCfg.getInt("youritem.transactions.slot")) openGui(p, "transauction");
+        }
+        if (t.contains("ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ")) {
+            e.setCancelled(true);
+            if (e.getRawSlot() == guiCfg.getInt("transauction.back.slot")) openGui(p, "youritem");
+        }
+    }
+
+    private void cycleFilter(Player p) {
+        List<String> keys = guiCfg.getStringList("auction.filter.keys");
+        String current = playerFilter.getOrDefault(p.getUniqueId(), "ALL");
+        int nextIdx = (keys.indexOf(current) + 1) % keys.size();
+        playerFilter.put(p.getUniqueId(), keys.get(nextIdx));
+        play(p, "click");
+        openMain(p, 1);
+    }
+
+    public void openGui(Player p, String type) {
+        play(p, "open-menu");
+        Inventory inv = Bukkit.createInventory(null, guiCfg.getInt(type + ".size"), color(guiCfg.getString(type + ".title")));
+        if (guiCfg.contains(type + ".back")) setBtn(inv, type + ".back");
+        if (guiCfg.contains(type + ".transactions")) setBtn(inv, type + ".transactions");
+        if (guiCfg.contains(type + ".info")) setBtn(inv, type + ".info");
+        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
     }
 
     private void saveToDB(Player p, ItemStack item, double price) {
@@ -191,12 +235,22 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
             dataStream.writeObject(item);
             dataStream.close();
             String base64 = Base64.getEncoder().encodeToString(outputStream.toByteArray());
-            PreparedStatement ps = connection.prepareStatement("INSERT INTO aris_auction (seller, item, price, time) VALUES (?, ?, ?, ?)");
+            PreparedStatement ps = connection.prepareStatement("INSERT INTO aris_auction (seller, item, price, category, time) VALUES (?, ?, ?, ?, ?)");
             ps.setString(1, p.getUniqueId().toString());
             ps.setString(2, base64);
             ps.setDouble(3, price);
-            ps.setLong(4, System.currentTimeMillis());
+            ps.setString(4, getCategory(item.getType()));
+            ps.setLong(5, System.currentTimeMillis());
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
-            }
+
+    private String getCategory(Material m) {
+        String n = m.name();
+        if (n.contains("SWORD") || n.contains("BOW") || n.contains("AXE")) return "COMBAT";
+        if (n.contains("PICKAXE") || n.contains("SHOVEL") || n.contains("HOE")) return "TOOLS";
+        if (m.isEdible()) return "FOOD";
+        if (m.isBlock()) return "BLOCKS";
+        return "ALL";
+    }
+    }
