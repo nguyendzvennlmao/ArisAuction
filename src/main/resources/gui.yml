@@ -9,10 +9,10 @@ sort:
   active_prefix: "&#00fc88● "
   inactive_prefix: "&f● "
   options:
+    recently_listed: "Newest"
     highest_price: "Highest Price"
     lowest_price: "Lowest Price"
     last_listed: "Oldest"
-    recently_listed: "Newest"
 
 filter:
   slot: 47
@@ -26,10 +26,6 @@ filter:
     tools: "Tools"
     food: "Food"
     combat: "Combat"
-    potions: "Potions"
-    books: "Enchanted Books"
-    ingredients: "Ingredients"
-    utilities: "Utilities"
 
 buttons:
   previous-page:
