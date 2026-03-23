@@ -1,0 +1,19 @@
+auction:
+  duration-hours: 24
+  fee-percentage: 0
+  minimum-price: 1.0
+  maximum-price: 100000000.0
+  expire-check-interval: 60
+  item-lore:
+    - ""
+    - "&fSeller: &#facc15%seller%"
+    - "&fPrice: &#00fc88$%price%"
+    - "&fTime: &7%time%"
+    - ""
+    - "&eClick to buy"
+
+sounds:
+  click: UI_BUTTON_CLICK
+  success: ENTITY_PLAYER_LEVELUP
+  error: ENTITY_VILLAGER_NO
+  open-menu: BLOCK_CHEST_OPEN
