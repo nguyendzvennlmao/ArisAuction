@@ -25,6 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.io.BukkitObjectInputStream;
 import org.bukkit.util.io.BukkitObjectOutputStream;
 
+import java.io.File;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.*;
@@ -133,7 +134,7 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         setBtn(inv, "auction.next");
         setBtn(inv, "auction.my-items");
         setFilterBtn(inv, p);
-        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
+        p.openInventory(inv);
     }
 
     public void openConfirmSell(Player p, ItemStack item, double price) {
@@ -148,7 +149,7 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         m.setLore(lore);
         d.setItemMeta(m);
         inv.setItem(guiCfg.getInt(type + ".item-slot"), d);
-        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
+        p.openInventory(inv);
     }
 
     private void setFilterBtn(Inventory inv, Player p) {
@@ -217,7 +218,7 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         if (guiCfg.contains(type + ".back")) setBtn(inv, type + ".back");
         if (guiCfg.contains(type + ".transactions")) setBtn(inv, type + ".transactions");
         if (guiCfg.contains(type + ".info")) setBtn(inv, type + ".info");
-        p.getScheduler().execute(this, () -> p.openInventory(inv), null, 0L);
+        p.openInventory(inv);
     }
 
     private void saveToDB(Player p, ItemStack item, double price) {
@@ -245,4 +246,4 @@ public class ArisAuction extends JavaPlugin implements Listener, CommandExecutor
         if (m.isBlock()) return "BLOCKS";
         return "ALL";
     }
-  }
+    }
