@@ -19,8 +19,3 @@ invalid-price:
   text: "%prefix%&cGiá bán không hợp lệ!"
   chat: true
   actionbar: false
-
-inventory-full:
-  text: "%prefix%&cTúi đồ của bạn đã đầy!"
-  chat: true
-  actionbar: true
