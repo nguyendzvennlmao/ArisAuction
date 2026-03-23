@@ -1,0 +1,89 @@
+auction:
+  title: "&8ᴀᴜᴄᴛɪᴏɴ (Page %current_page%)"
+  size: 54
+  slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+  previous:
+    slot: 45
+    material: ARROW
+    name: "&#00fc88ᴘʀᴇᴠɪᴏᴜꜱ"
+  refresh:
+    slot: 49
+    material: ANVIL
+    name: "&#00fc88ᴀᴜᴄᴛɪᴏɴ"
+  next:
+    slot: 53
+    material: ARROW
+    name: "&#00fc88ɴᴇxᴛ"
+  my-items:
+    slot: 51
+    material: CHEST
+    name: "&#00fc88ʏᴏᴜʀ ɪᴛᴇᴍꜱ"
+  sort:
+    slot: 47
+    material: CAULDRON
+    name: "&#00fc88ꜱᴏʀᴛ"
+  filter:
+    slot: 48
+    material: HOPPER
+    name: "&#00fc88ꜰɪʟᴛᴇʀ"
+    active_prefix: "&#00fc88● "
+    inactive_prefix: "&f● "
+    keys: 
+      - all
+      - blocks
+      - tools
+      - combat
+      - food
+    options:
+      - "Tất cả"
+      - "Khối vuông"
+      - "Công cụ"
+      - "Chiến đấu"
+      - "Đồ ăn"
+
+youritem:
+  title: "&8ᴀᴜᴄᴛɪᴏɴ -> Your Items"
+  size: 27
+  slots: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+  info:
+    slot: 0
+    material: PAPER
+    name: "&#00fc88Sell Item"
+  transactions:
+    slot: 26
+    material: WRITABLE_BOOK
+    name: "&#00fc88ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
+
+confirmbuy:
+  title: "&8ᴄᴏɴꜰɪʀᴍ ᴘᴜʀᴄʜᴀꜱᴇ"
+  size: 27
+  confirm:
+    slot: 15
+    material: LIME_STAINED_GLASS_PANE
+    name: "&#04fc04ᴄᴏɴғɪʀᴍ"
+  cancel:
+    slot: 11
+    material: RED_STAINED_GLASS_PANE
+    name: "&#fc0404ᴄᴀɴᴄᴇʟ"
+  item-slot: 13
+
+confirmsell:
+  title: "&8ᴄᴏɴꜰɪʀᴍ ʟɪꜱᴛɪɴɢ"
+  size: 27
+  confirm:
+    slot: 15
+    material: LIME_STAINED_GLASS_PANE
+    name: "&#04fc04ᴄᴏɴғɪʀᴍ"
+  cancel:
+    slot: 11
+    material: RED_STAINED_GLASS_PANE
+    name: "&#fc0404ᴄᴀɴᴄᴇʟ"
+  item-slot: 13
+
+transauction:
+  title: "&8ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
+  size: 54
+  back:
+    slot: 49
+    material: ARROW
+    name: "&cBack to Menu"
