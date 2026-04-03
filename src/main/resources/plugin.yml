@@ -1,0 +1,13 @@
+name: ArisAuction
+version: 1.0
+main: me.aris.arisauction.ArisAuction
+api-version: 1.20
+folia-supported: true
+depend: [Vault]
+author: VennLMAO
+commands:
+  auction:
+    aliases: [auc, ah]
+    description: Auction house command
+  ah:
+    description: Auction house command
