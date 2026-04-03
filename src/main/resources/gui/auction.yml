@@ -116,29 +116,3 @@ Transaction-Item:
   lore:
     - "&fClick to view your auction history."
   material: WRITABLE_BOOK
-
-Sort-Items:
-  Recently-Listed:
-    slot: 20
-    material: CLOCK
-    name: "&eRecently Listed"
-    lore:
-      - "&7Sort by recently listed"
-  Last-Listed:
-    slot: 22
-    material: CLOCK
-    name: "&eLast Listed"
-    lore:
-      - "&7Sort by last listed"
-  Lowest-Price:
-    slot: 24
-    material: GOLD_INGOT
-    name: "&aLowest Price"
-    lore:
-      - "&7Sort by lowest price"
-  Highest-Price:
-    slot: 26
-    material: DIAMOND
-    name: "&cHighest Price"
-    lore:
-      - "&7Sort by highest price"
