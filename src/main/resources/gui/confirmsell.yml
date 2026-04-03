@@ -1,0 +1,29 @@
+GUI-Title: "&7ᴄᴏɴꜰɪʀᴍ ᴍᴇɴᴜ"
+size: 27
+
+Filler:
+  name: ""
+  material: BLACK_STAINED_GLASS_PANE
+
+Listing-Slots:
+  - 13
+
+Product-Lore:
+  - "&fYou're going to sell this"
+  - "&ffor &a$%price%&f!"
+
+Accept:
+  slot: 11
+  name: "&aᴄᴏɴꜰɪʀᴍ"
+  lore:
+    - "&7"
+    - "&7Click to confirm."
+  material: GREEN_STAINED_GLASS_PANE
+
+Refuse:
+  slot: 15
+  name: "&cᴄᴀɴᴄᴇʟ"
+  lore:
+    - "&7"
+    - "&7Click to cancel."
+  material: RED_STAINED_GLASS_PANE
