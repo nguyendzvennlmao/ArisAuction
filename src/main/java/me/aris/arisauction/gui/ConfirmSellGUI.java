@@ -8,7 +8,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,12 +17,14 @@ public class ConfirmSellGUI {
     private final ItemStack item;
     private final double price;
     private Inventory inventory;
+    private boolean confirmed;
 
     public ConfirmSellGUI(ArisAuction plugin, Player player, ItemStack item, double price) {
         this.plugin = plugin;
         this.player = player;
         this.item = item;
         this.price = price;
+        this.confirmed = false;
     }
 
     public void open() {
@@ -33,101 +34,73 @@ public class ConfirmSellGUI {
     }
 
     private void createInventory() {
-        String title = plugin.getConfigManager().getGUI("confirmsell").getString("GUI-Title", "&7ᴄᴏɴꜰɪʀᴍ ᴍᴇɴᴜ");
+        String title = plugin.getConfigManager().getGUI("confirmsell").getString("GUI-Title", "&7CONFIRM MENU");
         title = plugin.getConfigManager().colorize(title);
         int size = plugin.getConfigManager().getGUI("confirmsell").getInt("size", 27);
         inventory = Bukkit.createInventory(null, size, title);
     }
 
     private void fillItems() {
-        List<Integer> listingSlots = plugin.getConfigManager().getGUI("confirmsell").getIntegerList("Listing-Slots");
-        
-        for (int slot : listingSlots) {
-            ItemStack displayItem = createDisplayItem();
-            inventory.setItem(slot, displayItem);
+        List<Integer> slots = plugin.getConfigManager().getGUI("confirmsell").getIntegerList("Listing-Slots");
+        if (slots.isEmpty()) slots.add(13);
+        for (int slot : slots) {
+            inventory.setItem(slot, createDisplayItem());
         }
-        
         setFiller();
         setControlItems();
     }
 
     private ItemStack createDisplayItem() {
-        ItemStack displayItem = item.clone();
-        ItemMeta meta = displayItem.getItemMeta();
-        
+        ItemStack display = item.clone();
+        ItemMeta meta = display.getItemMeta();
         List<String> lore = plugin.getConfigManager().getGUI("confirmsell").getStringList("Product-Lore");
-        List<String> coloredLore = new ArrayList<>();
+        List<String> colored = new ArrayList<>();
         double tax = plugin.getConfigManager().getConfig().getDouble("tax-rate", 0.0);
-        double taxAmount = price * tax;
-        double receiveAmount = price - taxAmount;
-        
         for (String line : lore) {
             line = line.replace("%price%", plugin.getEconomyManager().format(price));
-            line = line.replace("%tax%", plugin.getEconomyManager().format(taxAmount));
-            line = line.replace("%receive%", plugin.getEconomyManager().format(receiveAmount));
-            coloredLore.add(plugin.getConfigManager().colorize(line));
+            line = line.replace("%tax%", plugin.getEconomyManager().format(price * tax));
+            colored.add(plugin.getConfigManager().colorize(line));
         }
-        
-        if (meta.hasLore()) {
-            List<String> originalLore = meta.getLore();
-            if (originalLore != null) {
-                coloredLore.addAll(0, originalLore);
-            }
-        }
-        
-        meta.setLore(coloredLore);
-        displayItem.setItemMeta(meta);
-        return displayItem;
+        if (meta.hasLore() && meta.getLore() != null) colored.addAll(0, meta.getLore());
+        meta.setLore(colored);
+        display.setItemMeta(meta);
+        return display;
     }
 
     private void setFiller() {
-        String fillerName = plugin.getConfigManager().getGUI("confirmsell").getString("Filler.name", "");
-        String fillerMaterial = plugin.getConfigManager().getGUI("confirmsell").getString("Filler.material", "BLACK_STAINED_GLASS_PANE");
-        Material material = Material.getMaterial(fillerMaterial);
+        String name = plugin.getConfigManager().getGUI("confirmsell").getString("Filler.name", "");
+        String mat = plugin.getConfigManager().getGUI("confirmsell").getString("Filler.material", "BLACK_STAINED_GLASS_PANE");
+        Material material = Material.getMaterial(mat);
         if (material == null) material = Material.BLACK_STAINED_GLASS_PANE;
-        
         ItemStack filler = new ItemStack(material);
         ItemMeta meta = filler.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName(plugin.getConfigManager().colorize(fillerName));
-            filler.setItemMeta(meta);
-        }
-        
+        if (meta != null) meta.setDisplayName(plugin.getConfigManager().colorize(name));
+        filler.setItemMeta(meta);
         for (int i = 0; i < inventory.getSize(); i++) {
-            if (inventory.getItem(i) == null) {
-                inventory.setItem(i, filler);
-            }
+            if (inventory.getItem(i) == null) inventory.setItem(i, filler);
         }
     }
 
     private void setControlItems() {
-        String acceptName = plugin.getConfigManager().getGUI("confirmsell").getString("Accept.name", "&aᴄᴏɴꜰɪʀᴍ");
-        String acceptMaterial = plugin.getConfigManager().getGUI("confirmsell").getString("Accept.material", "GREEN_STAINED_GLASS_PANE");
         int acceptSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
-        List<String> acceptLore = plugin.getConfigManager().getGUI("confirmsell").getStringList("Accept.lore");
-        setItem(acceptSlot, acceptMaterial, acceptName, acceptLore);
+        String acceptName = plugin.getConfigManager().getGUI("confirmsell").getString("Accept.name", "&aCONFIRM");
+        String acceptMat = plugin.getConfigManager().getGUI("confirmsell").getString("Accept.material", "GREEN_STAINED_GLASS_PANE");
+        setItem(acceptSlot, acceptMat, acceptName, plugin.getConfigManager().getGUI("confirmsell").getStringList("Accept.lore"));
         
-        String refuseName = plugin.getConfigManager().getGUI("confirmsell").getString("Refuse.name", "&cᴄᴀɴᴄᴇʟ");
-        String refuseMaterial = plugin.getConfigManager().getGUI("confirmsell").getString("Refuse.material", "RED_STAINED_GLASS_PANE");
         int refuseSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
-        List<String> refuseLore = plugin.getConfigManager().getGUI("confirmsell").getStringList("Refuse.lore");
-        setItem(refuseSlot, refuseMaterial, refuseName, refuseLore);
+        String refuseName = plugin.getConfigManager().getGUI("confirmsell").getString("Refuse.name", "&cCANCEL");
+        String refuseMat = plugin.getConfigManager().getGUI("confirmsell").getString("Refuse.material", "RED_STAINED_GLASS_PANE");
+        setItem(refuseSlot, refuseMat, refuseName, plugin.getConfigManager().getGUI("confirmsell").getStringList("Refuse.lore"));
     }
 
-    private void setItem(int slot, String materialName, String displayName, List<String> lore) {
-        Material material = Material.getMaterial(materialName);
-        if (material == null) material = Material.STONE;
-        ItemStack item = new ItemStack(material);
+    private void setItem(int slot, String matName, String display, List<String> lore) {
+        Material mat = Material.getMaterial(matName);
+        if (mat == null) mat = Material.STONE;
+        ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(plugin.getConfigManager().colorize(displayName));
-            if (lore != null && !lore.isEmpty()) {
-                List<String> coloredLore = new ArrayList<>();
-                for (String line : lore) {
-                    coloredLore.add(plugin.getConfigManager().colorize(line));
-                }
-                meta.setLore(coloredLore);
-            }
+            meta.setDisplayName(plugin.getConfigManager().colorize(display));
+            if (lore != null) meta.setLore(plugin.getConfigManager().colorizeList(lore));
             item.setItemMeta(meta);
         }
         inventory.setItem(slot, item);
@@ -136,16 +109,15 @@ public class ConfirmSellGUI {
     public void handleClick(InventoryClickEvent event) {
         event.setCancelled(true);
         int slot = event.getRawSlot();
-        
-        int acceptSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
-        int refuseSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
-        
-        if (slot == acceptSlot) {
+        int accept = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
+        int refuse = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
+        if (slot == accept && !confirmed) {
+            confirmed = true;
             plugin.getAuctionManager().sellItem(player, item, price);
             player.closeInventory();
-        } else if (slot == refuseSlot) {
+        } else if (slot == refuse) {
             player.closeInventory();
             player.sendMessage(plugin.getConfigManager().getMessage("item-cancelled"));
         }
     }
-  }
+            }
