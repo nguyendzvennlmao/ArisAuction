@@ -1,0 +1,16 @@
+item-expiry-time: 86400
+min-sell-price: 1.0
+max-sell-price: 1000000000.0
+tax-rate: 0.0
+
+amount-format:
+  k: K
+  m: M
+  b: B
+  t: T
+
+time-format:
+  days: "d"
+  hours: "h"
+  minutes: "m"
+  seconds: "s"
