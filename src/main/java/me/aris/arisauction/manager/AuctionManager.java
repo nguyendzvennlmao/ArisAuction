@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class AuctionManager {
     private final ArisAuction plugin;
@@ -101,9 +102,9 @@ public class AuctionManager {
     }
 
     private void startFoliaExpiryTask() {
-        io.papermc.paper.threadedregions.scheduler.ScheduledTask task = plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, (scheduledTask) -> {
+        plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, (scheduledTask) -> {
             checkExpiredItems();
-        }, java.time.Duration.ofSeconds(0), java.time.Duration.ofSeconds(1));
+        }, 1L, 20L);
     }
 
     private void checkExpiredItems() {
@@ -281,7 +282,7 @@ public class AuctionManager {
                 if (sortingPlayer != null && sortingPlayer.equals(player)) {
                     sortingPlayer = null;
                 }
-            }, java.time.Duration.ofSeconds(5));
+            }, 100L);
         } else {
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 if (sortingPlayer != null && sortingPlayer.equals(player)) {
@@ -327,4 +328,4 @@ public class AuctionManager {
             player.sendMessage(plugin.getConfigManager().colorize("&cYou are not in sort mode! Use &6/ah &cto open auction first."));
         }
     }
-        }
+    }
