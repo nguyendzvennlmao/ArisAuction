@@ -1,0 +1,88 @@
+GUI-Title: "&b✹ &7Transactions (%page%/%max%)"
+size: 54
+
+Filler:
+  name: ""
+  material: BLACK_STAINED_GLASS_PANE
+
+Listing-Slots:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+  - 30
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+
+Transaction-Lore:
+  - "&fPrice: &a$%price%"
+  - "&fSeller: &a%seller%"
+  - "&fCustomer: &a%customer%"
+  - "&fTime: &a%time%"
+
+Previous-Page-Item:
+  slot: 48
+  name: "&e&lPREVIOUS PAGE"
+  lore:
+    - "&fClick to navigate."
+  material: ARROW
+
+Back-Item:
+  slot: 49
+  name: "&e&lGO BACK"
+  lore:
+    - "&fClick to go back."
+  material: RED_STAINED_GLASS_PANE
+
+Next-Page-Item:
+  slot: 50
+  name: "&e&lNEXT PAGE"
+  lore:
+    - "&fClick to navigate."
+  material: ARROW
+
+Transaction-Item:
+  slot: 53
+  name: "&e&lAUCTION HISTORY"
+  lore:
+    - "&fTotal Earned: &6$%earned%"
+    - "&fTotal Spent: &6$%spent%"
+  material: WRITABLE_BOOK
