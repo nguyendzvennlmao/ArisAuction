@@ -1,0 +1,144 @@
+GUI-Title: "&8ᴀᴜᴄᴛɪᴏɴ (Page %page%)"
+size: 54
+
+Filler:
+  name: ""
+  material: BLACK_STAINED_GLASS_PANE
+
+Listing-Slots:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 25
+  - 26
+  - 27
+  - 28
+  - 29
+  - 30
+  - 31
+  - 32
+  - 33
+  - 34
+  - 35
+  - 36
+  - 37
+  - 38
+  - 39
+  - 40
+  - 41
+  - 42
+  - 43
+  - 44
+
+Product-Lore:
+  - "#fbe74e⏺ &fSeller: #fbe74e%seller%"
+  - "#fbe74e⏺ &fTime Left: #fbe74e%time%"
+  - "#fbe74e⏺ &fPrice: #fbe74e$%price%"
+
+Product-Lore-Admin:
+  - "#fbe74e⏺ &fSeller: #fbe74e%seller%"
+  - "#fbe74e⏺ &fTime Left: #fbe74e%time%"
+  - "#fbe74e⏺ &fPrice: #fbe74e$%price%"
+  - "&7"
+  - "&cShift+Click to remove this item"
+  - "&cas an admin."
+
+Search-Item:
+  slot: 45
+  name: "#28f886ꜱᴇᴀʀᴄʜ"
+  lore:
+    - "&fClick to search."
+  material: OAK_SIGN
+
+Sorting-Item:
+  slot: 46
+  name: "&#00fc88ꜱᴏʀᴛ"
+  lore:
+    - "%sort_color_1%▪ Recently Listed"
+    - "%sort_color_2%▪ Last Listed"
+    - "%sort_color_3%▪ Lowest Price"
+    - "%sort_color_4%▪ Highest Price"
+  material: CAULDRON
+
+Previous-Page-Item:
+  slot: 48
+  name: "#28f886ʙᴀᴄᴋ"
+  lore:
+    - "&fClick to go to the previous page."
+  material: ARROW
+
+Refresh-Item:
+  slot: 49
+  name: "#28f886ᴀᴜᴄᴛɪᴏɴ"
+  lore:
+    - "&fClick to refresh."
+  material: ANVIL
+
+Next-Page-Item:
+  slot: 50
+  name: "#28f886ɴᴇxᴛ"
+  lore:
+    - "&fClick to go to the next page."
+  material: ARROW
+
+Your-Items-Item:
+  slot: 52
+  name: "#28f886ʏᴏᴜʀ ɪᴛᴇᴍꜱ"
+  lore:
+    - "&fClick to view the items you have listed."
+  material: CHEST
+
+Transaction-Item:
+  slot: 53
+  name: "#28f886ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
+  lore:
+    - "&fClick to view your auction history."
+  material: WRITABLE_BOOK
+
+Sort-Items:
+  Recently-Listed:
+    slot: 20
+    material: CLOCK
+    name: "&eRecently Listed"
+    lore:
+      - "&7Sort by recently listed"
+  Last-Listed:
+    slot: 22
+    material: CLOCK
+    name: "&eLast Listed"
+    lore:
+      - "&7Sort by last listed"
+  Lowest-Price:
+    slot: 24
+    material: GOLD_INGOT
+    name: "&aLowest Price"
+    lore:
+      - "&7Sort by lowest price"
+  Highest-Price:
+    slot: 26
+    material: DIAMOND
+    name: "&cHighest Price"
+    lore:
+      - "&7Sort by highest price"
