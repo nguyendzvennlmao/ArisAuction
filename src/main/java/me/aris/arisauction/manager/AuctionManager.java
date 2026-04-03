@@ -87,29 +87,47 @@ public class AuctionManager {
     }
 
     private void startExpiryTask() {
+        if (plugin.isFolia()) {
+            startFoliaExpiryTask();
+        } else {
+            startBukkitExpiryTask();
+        }
+    }
+
+    private void startBukkitExpiryTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-            long currentTime = System.currentTimeMillis();
-            List<UUID> toRemove = new ArrayList<>();
-            
-            for (Map.Entry<UUID, Long> entry : itemExpiry.entrySet()) {
-                if (entry.getValue() <= currentTime) {
-                    toRemove.add(entry.getKey());
-                }
-            }
-            
-            for (UUID uuid : toRemove) {
-                AuctionItem item = auctionItems.get(uuid);
-                if (item != null) {
-                    Player seller = Bukkit.getPlayer(item.getSeller());
-                    if (seller != null && seller.isOnline()) {
-                        seller.getInventory().addItem(item.getItemStack());
-                        seller.sendMessage(plugin.getConfigManager().getMessage("item-expired"));
-                    }
-                    auctionItems.remove(uuid);
-                    itemExpiry.remove(uuid);
-                }
-            }
+            checkExpiredItems();
         }, 0L, 20L);
+    }
+
+    private void startFoliaExpiryTask() {
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask task = plugin.getServer().getGlobalRegionScheduler().runAtFixedRate(plugin, (scheduledTask) -> {
+            checkExpiredItems();
+        }, java.time.Duration.ofSeconds(0), java.time.Duration.ofSeconds(1));
+    }
+
+    private void checkExpiredItems() {
+        long currentTime = System.currentTimeMillis();
+        List<UUID> toRemove = new ArrayList<>();
+        
+        for (Map.Entry<UUID, Long> entry : itemExpiry.entrySet()) {
+            if (entry.getValue() <= currentTime) {
+                toRemove.add(entry.getKey());
+            }
+        }
+        
+        for (UUID uuid : toRemove) {
+            AuctionItem item = auctionItems.get(uuid);
+            if (item != null) {
+                Player seller = Bukkit.getPlayer(item.getSeller());
+                if (seller != null && seller.isOnline()) {
+                    seller.getInventory().addItem(item.getItemStack());
+                    seller.sendMessage(plugin.getConfigManager().getMessage("item-expired"));
+                }
+                auctionItems.remove(uuid);
+                itemExpiry.remove(uuid);
+            }
+        }
     }
 
     public void sellItem(Player player, ItemStack item, double price) {
@@ -258,11 +276,19 @@ public class AuctionManager {
 
     public void setSortingPlayer(Player player) {
         this.sortingPlayer = player;
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (sortingPlayer != null && sortingPlayer.equals(player)) {
-                sortingPlayer = null;
-            }
-        }, 300L);
+        if (plugin.isFolia()) {
+            plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, (task) -> {
+                if (sortingPlayer != null && sortingPlayer.equals(player)) {
+                    sortingPlayer = null;
+                }
+            }, java.time.Duration.ofSeconds(5));
+        } else {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (sortingPlayer != null && sortingPlayer.equals(player)) {
+                    sortingPlayer = null;
+                }
+            }, 100L);
+        }
     }
 
     public Player getSortingPlayer() {
@@ -301,4 +327,4 @@ public class AuctionManager {
             player.sendMessage(plugin.getConfigManager().colorize("&cYou are not in sort mode! Use &6/ah &cto open auction first."));
         }
     }
-                 }
+        }
