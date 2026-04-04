@@ -11,11 +11,10 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.inventory.Inventory;
+import org.bukkit.scheduler.BukkitRunnable;
 
 public class AuctionListener implements Listener {
     private final ArisAuction plugin;
@@ -58,7 +57,12 @@ public class AuctionListener implements Listener {
                 }
             }
 
-            player.updateInventory();
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    player.updateInventory();
+                }
+            }.runTask(plugin);
         }
     }
 
@@ -99,4 +103,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-                                        }
+            }
