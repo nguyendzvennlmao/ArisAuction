@@ -15,6 +15,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 public class AuctionListener implements Listener {
     private final ArisAuction plugin;
@@ -23,7 +24,7 @@ public class AuctionListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         
@@ -52,15 +53,19 @@ public class AuctionListener implements Listener {
                 TransactionsGUI gui = new TransactionsGUI(plugin, player, 1);
                 gui.handleClick(event);
             } else if (title.contains("CONFIRM")) {
-                if (event.getRawSlot() == 11 || event.getRawSlot() == 15) {
+                int acceptSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
+                int refuseSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
+                if (event.getRawSlot() == acceptSlot || event.getRawSlot() == refuseSlot) {
                     ConfirmSellGUI gui = new ConfirmSellGUI(plugin, player, null, 0);
                     gui.handleClick(event);
                 }
             }
+            
+            player.updateInventory();
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         
@@ -71,7 +76,7 @@ public class AuctionListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
         Player player = event.getPlayer();
         if (player.getOpenInventory() != null) {
@@ -95,4 +100,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-                }
+    }
