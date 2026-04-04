@@ -16,71 +16,49 @@ public final class ArisAuction extends JavaPlugin {
     private AuctionManager auctionManager;
     private EconomyManager economyManager;
     private Economy economy;
+    private AuctionListener auctionListener;
 
     @Override
     public void onEnable() {
         instance = this;
-        
         if (!setupEconomy()) {
             getLogger().severe("Vault economy not found! Disabling plugin...");
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
-        
         saveDefaultConfig();
         configManager = new ConfigManager(this);
         configManager.loadAllConfigs();
         economyManager = new EconomyManager(this);
         auctionManager = new AuctionManager(this);
-        
+        auctionListener = new AuctionListener(this);
         getCommand("auction").setExecutor(new AuctionCommand(this));
         getCommand("auc").setExecutor(new AuctionCommand(this));
         getCommand("ah").setExecutor(new AuctionCommand(this));
-        Bukkit.getPluginManager().registerEvents(new AuctionListener(this), this);
-        
+        Bukkit.getPluginManager().registerEvents(auctionListener, this);
         getLogger().info("ArisAuction has been enabled! (Folia Support: " + isFolia() + ")");
     }
 
     private boolean setupEconomy() {
-        if (Bukkit.getPluginManager().getPlugin("Vault") == null) {
-            return false;
-        }
+        if (Bukkit.getPluginManager().getPlugin("Vault") == null) return false;
         RegisteredServiceProvider<Economy> rsp = Bukkit.getServicesManager().getRegistration(Economy.class);
-        if (rsp == null) {
-            return false;
-        }
+        if (rsp == null) return false;
         economy = rsp.getProvider();
         return economy != null;
     }
 
     @Override
     public void onDisable() {
-        if (auctionManager != null) {
-            auctionManager.saveAll();
-        }
+        if (auctionManager != null) auctionManager.saveAll();
         getLogger().info("ArisAuction has been disabled!");
     }
 
-    public static ArisAuction getInstance() {
-        return instance;
-    }
-
-    public ConfigManager getConfigManager() {
-        return configManager;
-    }
-
-    public AuctionManager getAuctionManager() {
-        return auctionManager;
-    }
-
-    public EconomyManager getEconomyManager() {
-        return economyManager;
-    }
-
-    public Economy getEconomy() {
-        return economy;
-    }
-
+    public static ArisAuction getInstance() { return instance; }
+    public ConfigManager getConfigManager() { return configManager; }
+    public AuctionManager getAuctionManager() { return auctionManager; }
+    public EconomyManager getEconomyManager() { return economyManager; }
+    public Economy getEconomy() { return economy; }
+    public AuctionListener getAuctionListener() { return auctionListener; }
     public boolean isFolia() {
         try {
             Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
@@ -89,4 +67,4 @@ public final class ArisAuction extends JavaPlugin {
             return false;
         }
     }
-  }
+            }
