@@ -13,9 +13,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 
 public class AuctionListener implements Listener {
     private final ArisAuction plugin;
@@ -24,43 +24,40 @@ public class AuctionListener implements Listener {
         this.plugin = plugin;
     }
 
+    private boolean isAuctionGui(String title) {
+        return title.contains("AUCTION") || title.contains("My Items") || title.contains("Transactions") || title.contains("CONFIRM");
+    }
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        
-        Inventory inventory = event.getInventory();
-        if (inventory == null) return;
-        
+        Player player = (Player) event.getWhoClicked();
         String title = event.getView().getTitle();
-        
-        if (title.contains("AUCTION") || title.contains("My Items") || title.contains("Transactions") || title.contains("CONFIRM")) {
+
+        if (isAuctionGui(title)) {
             event.setCancelled(true);
             event.setResult(org.bukkit.event.Event.Result.DENY);
-            
-            Player player = (Player) event.getWhoClicked();
-            
-            if (event.getSlotType() == InventoryType.SlotType.OUTSIDE) {
-                return;
+
+            if (event.getCursor() != null && !event.getCursor().getType().isAir()) {
+                player.setItemOnCursor(null);
             }
-            
-            if (title.contains("AUCTION")) {
-                AuctionGUI gui = new AuctionGUI(plugin, player, 1, "Recently Listed");
-                gui.handleClick(event);
-            } else if (title.contains("My Items")) {
-                YourItemsGUI gui = new YourItemsGUI(plugin, player, 1);
-                gui.handleClick(event);
-            } else if (title.contains("Transactions")) {
-                TransactionsGUI gui = new TransactionsGUI(plugin, player, 1);
-                gui.handleClick(event);
-            } else if (title.contains("CONFIRM")) {
-                int acceptSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
-                int refuseSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
-                if (event.getRawSlot() == acceptSlot || event.getRawSlot() == refuseSlot) {
-                    ConfirmSellGUI gui = new ConfirmSellGUI(plugin, player, null, 0);
-                    gui.handleClick(event);
+
+            if (event.getRawSlot() >= 0 && event.getRawSlot() < event.getInventory().getSize()) {
+                if (title.contains("AUCTION")) {
+                    new AuctionGUI(plugin, player, 1, "Recently Listed").handleClick(event);
+                } else if (title.contains("My Items")) {
+                    new YourItemsGUI(plugin, player, 1).handleClick(event);
+                } else if (title.contains("Transactions")) {
+                    new TransactionsGUI(plugin, player, 1).handleClick(event);
+                } else if (title.contains("CONFIRM")) {
+                    int accept = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
+                    int refuse = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
+                    if (event.getRawSlot() == accept || event.getRawSlot() == refuse) {
+                        new ConfirmSellGUI(plugin, player, null, 0).handleClick(event);
+                    }
                 }
             }
-            
+
             player.updateInventory();
         }
     }
@@ -68,22 +65,25 @@ public class AuctionListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        
-        String title = event.getView().getTitle();
-        if (title.contains("AUCTION") || title.contains("My Items") || title.contains("Transactions") || title.contains("CONFIRM")) {
+        if (isAuctionGui(event.getView().getTitle())) {
             event.setCancelled(true);
             event.setResult(org.bukkit.event.Event.Result.DENY);
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        Player player = event.getPlayer();
+        if (player.getOpenInventory() != null && isAuctionGui(player.getOpenInventory().getTitle())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
         Player player = event.getPlayer();
-        if (player.getOpenInventory() != null) {
-            String title = player.getOpenInventory().getTitle();
-            if (title.contains("AUCTION") || title.contains("My Items") || title.contains("Transactions") || title.contains("CONFIRM")) {
-                event.setCancelled(true);
-            }
+        if (player.getOpenInventory() != null && isAuctionGui(player.getOpenInventory().getTitle())) {
+            event.setCancelled(true);
         }
     }
 
@@ -91,7 +91,6 @@ public class AuctionListener implements Listener {
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
         String msg = event.getMessage().toLowerCase();
-        
         if (msg.startsWith("/sort ")) {
             event.setCancelled(true);
             plugin.getAuctionManager().handleSortCommand(player, msg.substring(6).split(" "));
@@ -100,4 +99,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-    }
+                                        }
