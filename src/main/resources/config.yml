@@ -10,7 +10,19 @@ amount-format:
   t: T
 
 time-format:
-  days: "d"
-  hours: "h"
-  minutes: "m"
-  seconds: "s"
+  days: d
+  hours: h
+  minutes: m
+  seconds: s
+
+sounds:
+  click: ENTITY_EXPERIENCE_ORB_PICKUP
+  buy: ENTITY_PLAYER_LEVELUP
+  sell: ENTITY_PLAYER_LEVELUP
+  error: BLOCK_ANVIL_LAND
+  refresh: ENTITY_EXPERIENCE_ORB_PICKUP
+  search: ENTITY_EXPERIENCE_ORB_PICKUP
+  sort: ENTITY_EXPERIENCE_ORB_PICKUP
+  page: ENTITY_EXPERIENCE_ORB_PICKUP
+  confirm: ENTITY_PLAYER_LEVELUP
+  cancel: BLOCK_NOTE_BLOCK_PLING
