@@ -5,7 +5,6 @@ import me.aris.arisauction.gui.AuctionGUI;
 import me.aris.arisauction.gui.ConfirmSellGUI;
 import me.aris.arisauction.gui.TransactionsGUI;
 import me.aris.arisauction.gui.YourItemsGUI;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -102,4 +101,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-}
+                  }
