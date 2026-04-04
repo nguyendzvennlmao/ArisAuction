@@ -1,4 +1,4 @@
-GUI-Title: "&8ᴀᴜᴄᴛɪᴏɴ (Page %page%)"
+GUI-Title: "&8AUCTION (Page %page%)"
 size: 54
 
 Filler:
@@ -53,28 +53,28 @@ Listing-Slots:
   - 44
 
 Product-Lore:
-  - "#fbe74e⏺ &fSeller: #fbe74e%seller%"
-  - "#fbe74e⏺ &fTime Left: #fbe74e%time%"
-  - "#fbe74e⏺ &fPrice: #fbe74e$%price%"
+  - "&#fbe74e⏺ &fSeller: &#fbe74e%seller%"
+  - "&#fbe74e⏺ &fTime Left: &#fbe74e%time%"
+  - "&#fbe74e⏺ &fPrice: &#fbe74e$%price%"
 
 Product-Lore-Admin:
-  - "#fbe74e⏺ &fSeller: #fbe74e%seller%"
-  - "#fbe74e⏺ &fTime Left: #fbe74e%time%"
-  - "#fbe74e⏺ &fPrice: #fbe74e$%price%"
+  - "&#fbe74e⏺ &fSeller: &#fbe74e%seller%"
+  - "&#fbe74e⏺ &fTime Left: &#fbe74e%time%"
+  - "&#fbe74e⏺ &fPrice: &#fbe74e$%price%"
   - "&7"
   - "&cShift+Click to remove this item"
   - "&cas an admin."
 
 Search-Item:
   slot: 45
-  name: "#28f886ꜱᴇᴀʀᴄʜ"
+  name: "#28f886SEARCH"
   lore:
     - "&fClick to search."
   material: OAK_SIGN
 
 Sorting-Item:
   slot: 46
-  name: "&#00fc88ꜱᴏʀᴛ"
+  name: "#00fc88SORT"
   lore:
     - "%sort_color_1%▪ Recently Listed"
     - "%sort_color_2%▪ Last Listed"
@@ -84,35 +84,35 @@ Sorting-Item:
 
 Previous-Page-Item:
   slot: 48
-  name: "#28f886ʙᴀᴄᴋ"
+  name: "#28f886BACK"
   lore:
     - "&fClick to go to the previous page."
   material: ARROW
 
 Refresh-Item:
   slot: 49
-  name: "#28f886ᴀᴜᴄᴛɪᴏɴ"
+  name: "#28f886AUCTION"
   lore:
     - "&fClick to refresh."
   material: ANVIL
 
 Next-Page-Item:
   slot: 50
-  name: "#28f886ɴᴇxᴛ"
+  name: "#28f886NEXT"
   lore:
     - "&fClick to go to the next page."
   material: ARROW
 
 Your-Items-Item:
   slot: 52
-  name: "#28f886ʏᴏᴜʀ ɪᴛᴇᴍꜱ"
+  name: "#28f886YOUR ITEMS"
   lore:
     - "&fClick to view the items you have listed."
   material: CHEST
 
 Transaction-Item:
   slot: 53
-  name: "#28f886ᴛʀᴀɴꜱᴀᴄᴛɪᴏɴꜱ"
+  name: "#28f886TRANSACTIONS"
   lore:
     - "&fClick to view your auction history."
   material: WRITABLE_BOOK
