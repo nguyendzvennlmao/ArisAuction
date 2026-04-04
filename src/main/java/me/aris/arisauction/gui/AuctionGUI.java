@@ -4,6 +4,7 @@ import me.aris.arisauction.ArisAuction;
 import me.aris.arisauction.model.AuctionItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -11,10 +12,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -259,34 +258,41 @@ public class AuctionGUI {
         int transactionSlot = plugin.getConfigManager().getGUI("auction").getInt("Transaction-Item.slot", 53);
 
         if (slot == backSlot && page > 1) {
+            playSound("page");
             new AuctionGUI(plugin, player, page - 1, sortType, searchTerm).open();
             return;
         }
         if (slot == nextSlot) {
             int totalPages = (int) Math.ceil(items.size() / 45.0);
             if (page < totalPages) {
+                playSound("page");
                 new AuctionGUI(plugin, player, page + 1, sortType, searchTerm).open();
             }
             return;
         }
         if (slot == refreshSlot) {
+            playSound("refresh");
             new AuctionGUI(plugin, player, page, sortType, searchTerm).open();
             return;
         }
         if (slot == searchSlot) {
+            playSound("search");
             player.closeInventory();
             player.sendMessage(plugin.getConfigManager().getMessage("search-usage"));
             return;
         }
         if (slot == sortSlot) {
+            playSound("sort");
             openSortMenu();
             return;
         }
         if (slot == yourItemsSlot) {
+            playSound("click");
             new YourItemsGUI(plugin, player, 1).open();
             return;
         }
         if (slot == transactionSlot) {
+            playSound("click");
             new TransactionsGUI(plugin, player, 1).open();
             return;
         }
@@ -296,11 +302,18 @@ public class AuctionGUI {
         if (itemIndex >= 0 && itemIndex < items.size()) {
             AuctionItem auctionItem = items.get(itemIndex);
             if (event.isLeftClick()) {
+                playSound("buy");
                 plugin.getAuctionManager().buyItem(player, auctionItem.getId());
                 player.closeInventory();
                 new AuctionGUI(plugin, player, page, sortType, searchTerm).open();
             } else if (event.isRightClick()) {
+                playSound("click");
                 player.sendMessage(plugin.getConfigManager().getMessage("report-sent"));
+            } else if (event.isShiftClick() && player.hasPermission("arisauction.admin")) {
+                playSound("click");
+                plugin.getAuctionManager().adminRemoveItem(auctionItem.getId());
+                player.sendMessage(plugin.getConfigManager().getMessage("admin-remove").replace("%item%", auctionItem.getItemStack().getType().toString()));
+                new AuctionGUI(plugin, player, page, sortType, searchTerm).open();
             }
         }
     }
@@ -321,4 +334,15 @@ public class AuctionGUI {
             }
         }.runTaskLater(plugin, 1L);
     }
-}
+
+    private void playSound(String soundKey) {
+        String soundName = plugin.getConfigManager().getConfig().getString("sounds." + soundKey);
+        if (soundName != null && !soundName.isEmpty()) {
+            try {
+                Sound sound = Sound.valueOf(soundName);
+                player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+    }
+                      }
