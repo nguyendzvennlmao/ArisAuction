@@ -52,8 +52,10 @@ public class AuctionListener implements Listener {
                 TransactionsGUI gui = new TransactionsGUI(plugin, player, 1);
                 gui.handleClick(event);
             } else if (title.contains("CONFIRM")) {
-                ConfirmSellGUI gui = new ConfirmSellGUI(plugin, player, null, 0);
-                gui.handleClick(event);
+                if (event.getRawSlot() == 11 || event.getRawSlot() == 15) {
+                    ConfirmSellGUI gui = new ConfirmSellGUI(plugin, player, null, 0);
+                    gui.handleClick(event);
+                }
             }
         }
     }
@@ -93,4 +95,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-    }
+                }
