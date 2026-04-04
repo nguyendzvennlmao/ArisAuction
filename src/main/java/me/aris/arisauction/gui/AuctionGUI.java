@@ -44,6 +44,8 @@ public class AuctionGUI {
         sortItems();
         createInventory();
         fillItems();
+        plugin.getServer().getPluginManager().registerEvents(plugin.getAuctionListener(), plugin);
+        plugin.getAuctionListener().registerAuctionGUI(player, this);
         player.openInventory(inventory);
     }
 
@@ -245,6 +247,7 @@ public class AuctionGUI {
     }
 
     public void handleClick(InventoryClickEvent event) {
+        if (inventory == null) return;
         event.setCancelled(true);
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= inventory.getSize()) return;
@@ -259,6 +262,7 @@ public class AuctionGUI {
 
         if (slot == backSlot && page > 1) {
             playSound("page");
+            player.closeInventory();
             new AuctionGUI(plugin, player, page - 1, sortType, searchTerm).open();
             return;
         }
@@ -266,12 +270,14 @@ public class AuctionGUI {
             int totalPages = (int) Math.ceil(items.size() / 45.0);
             if (page < totalPages) {
                 playSound("page");
+                player.closeInventory();
                 new AuctionGUI(plugin, player, page + 1, sortType, searchTerm).open();
             }
             return;
         }
         if (slot == refreshSlot) {
             playSound("refresh");
+            player.closeInventory();
             new AuctionGUI(plugin, player, page, sortType, searchTerm).open();
             return;
         }
@@ -283,16 +289,19 @@ public class AuctionGUI {
         }
         if (slot == sortSlot) {
             playSound("sort");
+            player.closeInventory();
             openSortMenu();
             return;
         }
         if (slot == yourItemsSlot) {
             playSound("click");
+            player.closeInventory();
             new YourItemsGUI(plugin, player, 1).open();
             return;
         }
         if (slot == transactionSlot) {
             playSound("click");
+            player.closeInventory();
             new TransactionsGUI(plugin, player, 1).open();
             return;
         }
@@ -313,13 +322,13 @@ public class AuctionGUI {
                 playSound("click");
                 plugin.getAuctionManager().adminRemoveItem(auctionItem.getId());
                 player.sendMessage(plugin.getConfigManager().getMessage("admin-remove").replace("%item%", auctionItem.getItemStack().getType().toString()));
+                player.closeInventory();
                 new AuctionGUI(plugin, player, page, sortType, searchTerm).open();
             }
         }
     }
 
     private void openSortMenu() {
-        player.closeInventory();
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -345,4 +354,4 @@ public class AuctionGUI {
             }
         }
     }
-                      }
+    }
