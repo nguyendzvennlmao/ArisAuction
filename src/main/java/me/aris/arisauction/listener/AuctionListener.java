@@ -5,6 +5,7 @@ import me.aris.arisauction.gui.AuctionGUI;
 import me.aris.arisauction.gui.ConfirmSellGUI;
 import me.aris.arisauction.gui.TransactionsGUI;
 import me.aris.arisauction.gui.YourItemsGUI;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,7 +15,6 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.scheduler.BukkitRunnable;
 
 public class AuctionListener implements Listener {
@@ -42,20 +42,18 @@ public class AuctionListener implements Listener {
                 player.setItemOnCursor(null);
             }
 
-            if (event.getRawSlot() >= 0 && event.getRawSlot() < event.getInventory().getSize()) {
-                if (title.contains("AUCTION")) {
-                    new AuctionGUI(plugin, player, 1, "Recently Listed").handleClick(event);
-                } else if (title.contains("My Items")) {
-                    new YourItemsGUI(plugin, player, 1).handleClick(event);
-                } else if (title.contains("Transactions")) {
-                    new TransactionsGUI(plugin, player, 1).handleClick(event);
-                } else if (title.contains("CONFIRM")) {
-                    int accept = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
-                    int refuse = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
-                    if (event.getRawSlot() == accept || event.getRawSlot() == refuse) {
-                        new ConfirmSellGUI(plugin, player, null, 0).handleClick(event);
-                    }
-                }
+            if (title.contains("AUCTION")) {
+                AuctionGUI gui = new AuctionGUI(plugin, player, 1, "Recently Listed");
+                gui.handleClick(event);
+            } else if (title.contains("My Items")) {
+                YourItemsGUI gui = new YourItemsGUI(plugin, player, 1);
+                gui.handleClick(event);
+            } else if (title.contains("Transactions")) {
+                TransactionsGUI gui = new TransactionsGUI(plugin, player, 1);
+                gui.handleClick(event);
+            } else if (title.contains("CONFIRM")) {
+                ConfirmSellGUI gui = new ConfirmSellGUI(plugin, player, null, 0);
+                gui.handleClick(event);
             }
 
             new BukkitRunnable() {
@@ -104,4 +102,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-    }
+}
