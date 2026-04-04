@@ -8,6 +8,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class ConfirmSellGUI {
     public ConfirmSellGUI(ArisAuction plugin, Player player, ItemStack item, double price) {
         this.plugin = plugin;
         this.player = player;
-        this.item = item;
+        this.item = item.clone();
         this.price = price;
         this.confirmed = false;
     }
@@ -43,9 +44,12 @@ public class ConfirmSellGUI {
     private void fillItems() {
         List<Integer> slots = plugin.getConfigManager().getGUI("confirmsell").getIntegerList("Listing-Slots");
         if (slots.isEmpty()) slots.add(13);
+        
         for (int slot : slots) {
-            inventory.setItem(slot, createDisplayItem());
+            ItemStack displayItem = createDisplayItem();
+            inventory.setItem(slot, displayItem);
         }
+        
         setFiller();
         setControlItems();
     }
@@ -56,12 +60,19 @@ public class ConfirmSellGUI {
         List<String> lore = plugin.getConfigManager().getGUI("confirmsell").getStringList("Product-Lore");
         List<String> colored = new ArrayList<>();
         double tax = plugin.getConfigManager().getConfig().getDouble("tax-rate", 0.0);
+        double taxAmount = price * tax;
+        
         for (String line : lore) {
             line = line.replace("%price%", plugin.getEconomyManager().format(price));
-            line = line.replace("%tax%", plugin.getEconomyManager().format(price * tax));
+            line = line.replace("%tax%", plugin.getEconomyManager().format(taxAmount));
+            line = line.replace("%receive%", plugin.getEconomyManager().format(price - taxAmount));
             colored.add(plugin.getConfigManager().colorize(line));
         }
-        if (meta.hasLore() && meta.getLore() != null) colored.addAll(0, meta.getLore());
+        
+        if (meta.hasLore() && meta.getLore() != null) {
+            colored.addAll(0, meta.getLore());
+        }
+        
         meta.setLore(colored);
         display.setItemMeta(meta);
         return display;
@@ -72,12 +83,18 @@ public class ConfirmSellGUI {
         String mat = plugin.getConfigManager().getGUI("confirmsell").getString("Filler.material", "BLACK_STAINED_GLASS_PANE");
         Material material = Material.getMaterial(mat);
         if (material == null) material = Material.BLACK_STAINED_GLASS_PANE;
+        
         ItemStack filler = new ItemStack(material);
         ItemMeta meta = filler.getItemMeta();
-        if (meta != null) meta.setDisplayName(plugin.getConfigManager().colorize(name));
-        filler.setItemMeta(meta);
+        if (meta != null) {
+            meta.setDisplayName(plugin.getConfigManager().colorize(name));
+            filler.setItemMeta(meta);
+        }
+        
         for (int i = 0; i < inventory.getSize(); i++) {
-            if (inventory.getItem(i) == null) inventory.setItem(i, filler);
+            if (inventory.getItem(i) == null) {
+                inventory.setItem(i, filler);
+            }
         }
     }
 
@@ -93,14 +110,16 @@ public class ConfirmSellGUI {
         setItem(refuseSlot, refuseMat, refuseName, plugin.getConfigManager().getGUI("confirmsell").getStringList("Refuse.lore"));
     }
 
-    private void setItem(int slot, String matName, String display, List<String> lore) {
+    private void setItem(int slot, String matName, String displayName, List<String> lore) {
         Material mat = Material.getMaterial(matName);
         if (mat == null) mat = Material.STONE;
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(plugin.getConfigManager().colorize(display));
-            if (lore != null) meta.setLore(plugin.getConfigManager().colorizeList(lore));
+            meta.setDisplayName(plugin.getConfigManager().colorize(displayName));
+            if (lore != null && !lore.isEmpty()) {
+                meta.setLore(plugin.getConfigManager().colorizeList(lore));
+            }
             item.setItemMeta(meta);
         }
         inventory.setItem(slot, item);
@@ -108,16 +127,18 @@ public class ConfirmSellGUI {
 
     public void handleClick(InventoryClickEvent event) {
         event.setCancelled(true);
+        
         int slot = event.getRawSlot();
-        int accept = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
-        int refuse = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
-        if (slot == accept && !confirmed) {
+        int acceptSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Accept.slot", 11);
+        int refuseSlot = plugin.getConfigManager().getGUI("confirmsell").getInt("Refuse.slot", 15);
+        
+        if (slot == acceptSlot && !confirmed) {
             confirmed = true;
             plugin.getAuctionManager().sellItem(player, item, price);
             player.closeInventory();
-        } else if (slot == refuse) {
+        } else if (slot == refuseSlot) {
             player.closeInventory();
             player.sendMessage(plugin.getConfigManager().getMessage("item-cancelled"));
         }
     }
-            }
+                                                                             }
