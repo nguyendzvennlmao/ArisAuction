@@ -4,6 +4,7 @@ import me.aris.arisauction.ArisAuction;
 import me.aris.arisauction.model.AuctionItem;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -40,8 +41,8 @@ public class YourItemsGUI {
     }
 
     private void createInventory() {
-        String title = plugin.getConfigManager().getGUI("youritems").getString("GUI-Title", "&b✹ &7My Items (%page%/%max%)");
         int totalPages = (int) Math.ceil(items.size() / 45.0);
+        String title = plugin.getConfigManager().getGUI("youritems").getString("GUI-Title", "&b✹ &7My Items (%page%/%max%)");
         title = title.replace("%page%", String.valueOf(page)).replace("%max%", String.valueOf(Math.max(1, totalPages)));
         title = plugin.getConfigManager().colorize(title);
         int size = plugin.getConfigManager().getGUI("youritems").getInt("size", 54);
@@ -51,13 +52,11 @@ public class YourItemsGUI {
     private void fillItems() {
         List<Integer> listingSlots = plugin.getConfigManager().getGUI("youritems").getIntegerList("Listing-Slots");
         int startIndex = (page - 1) * 45;
-        
         for (int i = 0; i < listingSlots.size() && startIndex + i < items.size(); i++) {
             AuctionItem auctionItem = items.get(startIndex + i);
             ItemStack displayItem = createDisplayItem(auctionItem);
             inventory.setItem(listingSlots.get(i), displayItem);
         }
-        
         setFiller();
         setControlItems();
     }
@@ -65,7 +64,6 @@ public class YourItemsGUI {
     private ItemStack createDisplayItem(AuctionItem auctionItem) {
         ItemStack item = auctionItem.getItemStack().clone();
         ItemMeta meta = item.getItemMeta();
-        
         List<String> lore = plugin.getConfigManager().getGUI("youritems").getStringList("Product-Lore");
         List<String> coloredLore = new ArrayList<>();
         for (String line : lore) {
@@ -74,14 +72,9 @@ public class YourItemsGUI {
             line = line.replace("%price%", plugin.getEconomyManager().format(auctionItem.getPrice()));
             coloredLore.add(plugin.getConfigManager().colorize(line));
         }
-        
-        if (meta.hasLore()) {
-            List<String> originalLore = meta.getLore();
-            if (originalLore != null) {
-                coloredLore.addAll(0, originalLore);
-            }
+        if (meta.hasLore() && meta.getLore() != null) {
+            coloredLore.addAll(0, meta.getLore());
         }
-        
         meta.setLore(coloredLore);
         item.setItemMeta(meta);
         return item;
@@ -90,17 +83,14 @@ public class YourItemsGUI {
     private String formatTime(long expiryTime) {
         long remaining = expiryTime - System.currentTimeMillis();
         if (remaining <= 0) return "Expired";
-        
         long days = TimeUnit.MILLISECONDS.toDays(remaining);
         long hours = TimeUnit.MILLISECONDS.toHours(remaining) % 24;
         long minutes = TimeUnit.MILLISECONDS.toMinutes(remaining) % 60;
         long seconds = TimeUnit.MILLISECONDS.toSeconds(remaining) % 60;
-        
         String daysStr = plugin.getConfigManager().getConfig().getString("time-format.days", "d");
         String hoursStr = plugin.getConfigManager().getConfig().getString("time-format.hours", "h");
         String minutesStr = plugin.getConfigManager().getConfig().getString("time-format.minutes", "m");
         String secondsStr = plugin.getConfigManager().getConfig().getString("time-format.seconds", "s");
-        
         if (days > 0) return days + daysStr + " " + hours + hoursStr;
         if (hours > 0) return hours + hoursStr + " " + minutes + minutesStr;
         if (minutes > 0) return minutes + minutesStr + " " + seconds + secondsStr;
@@ -112,14 +102,12 @@ public class YourItemsGUI {
         String fillerMaterial = plugin.getConfigManager().getGUI("youritems").getString("Filler.material", "BLACK_STAINED_GLASS_PANE");
         Material material = Material.getMaterial(fillerMaterial);
         if (material == null) material = Material.BLACK_STAINED_GLASS_PANE;
-        
         ItemStack filler = new ItemStack(material);
         ItemMeta meta = filler.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(plugin.getConfigManager().colorize(fillerName));
             filler.setItemMeta(meta);
         }
-        
         for (int i = 0; i < inventory.getSize(); i++) {
             if (inventory.getItem(i) == null) {
                 inventory.setItem(i, filler);
@@ -133,19 +121,19 @@ public class YourItemsGUI {
         int backSlot = plugin.getConfigManager().getGUI("youritems").getInt("Previous-Page-Item.slot", 48);
         List<String> backLore = plugin.getConfigManager().getGUI("youritems").getStringList("Previous-Page-Item.lore");
         setItem(backSlot, backMaterial, backName, backLore);
-        
+
         String backToAuctionName = plugin.getConfigManager().getGUI("youritems").getString("Back-Item.name", "&e&lGO BACK");
         String backToAuctionMaterial = plugin.getConfigManager().getGUI("youritems").getString("Back-Item.material", "RED_STAINED_GLASS_PANE");
         int backToAuctionSlot = plugin.getConfigManager().getGUI("youritems").getInt("Back-Item.slot", 49);
         List<String> backToAuctionLore = plugin.getConfigManager().getGUI("youritems").getStringList("Back-Item.lore");
         setItem(backToAuctionSlot, backToAuctionMaterial, backToAuctionName, backToAuctionLore);
-        
+
         String nextName = plugin.getConfigManager().getGUI("youritems").getString("Next-Page-Item.name", "&e&lNEXT PAGE");
         String nextMaterial = plugin.getConfigManager().getGUI("youritems").getString("Next-Page-Item.material", "ARROW");
         int nextSlot = plugin.getConfigManager().getGUI("youritems").getInt("Next-Page-Item.slot", 50);
         List<String> nextLore = plugin.getConfigManager().getGUI("youritems").getStringList("Next-Page-Item.lore");
         setItem(nextSlot, nextMaterial, nextName, nextLore);
-        
+
         String myItemsName = plugin.getConfigManager().getGUI("youritems").getString("MyItems-Item.name", "&e&lMY ITEMS");
         String myItemsMaterial = plugin.getConfigManager().getGUI("youritems").getString("MyItems-Item.material", "CHEST");
         int myItemsSlot = plugin.getConfigManager().getGUI("youritems").getInt("MyItems-Item.slot", 53);
@@ -172,48 +160,60 @@ public class YourItemsGUI {
         inventory.setItem(slot, item);
     }
 
+    private void playSound(String soundKey) {
+        String soundName = plugin.getConfigManager().getConfig().getString("sounds." + soundKey);
+        if (soundName != null && !soundName.isEmpty()) {
+            try {
+                Sound sound = Sound.valueOf(soundName);
+                player.playSound(player.getLocation(), sound, 1.0f, 1.0f);
+            } catch (IllegalArgumentException e) {
+            }
+        }
+    }
+
     public void handleClick(InventoryClickEvent event) {
         event.setCancelled(true);
         int slot = event.getRawSlot();
-        
+
         int backSlot = plugin.getConfigManager().getGUI("youritems").getInt("Previous-Page-Item.slot", 48);
         int nextSlot = plugin.getConfigManager().getGUI("youritems").getInt("Next-Page-Item.slot", 50);
         int backToAuctionSlot = plugin.getConfigManager().getGUI("youritems").getInt("Back-Item.slot", 49);
         int myItemsSlot = plugin.getConfigManager().getGUI("youritems").getInt("MyItems-Item.slot", 53);
-        
+
         if (slot == backSlot && page > 1) {
+            playSound("page");
             new YourItemsGUI(plugin, player, page - 1).open();
             return;
         }
-        
         if (slot == nextSlot) {
             int totalPages = (int) Math.ceil(items.size() / 45.0);
             if (page < totalPages) {
+                playSound("page");
                 new YourItemsGUI(plugin, player, page + 1).open();
             }
             return;
         }
-        
         if (slot == backToAuctionSlot) {
+            playSound("click");
             new AuctionGUI(plugin, player, 1, "Recently Listed").open();
             return;
         }
-        
         if (slot == myItemsSlot) {
+            playSound("click");
             new YourItemsGUI(plugin, player, 1).open();
             return;
         }
-        
+
         List<Integer> listingSlots = plugin.getConfigManager().getGUI("youritems").getIntegerList("Listing-Slots");
         int itemIndex = listingSlots.indexOf(slot);
         int startIndex = (page - 1) * 45;
-        
         if (itemIndex >= 0 && startIndex + itemIndex < items.size()) {
             AuctionItem auctionItem = items.get(startIndex + itemIndex);
             if (event.isRightClick()) {
+                playSound("cancel");
                 plugin.getAuctionManager().cancelItem(player, auctionItem.getId());
                 new YourItemsGUI(plugin, player, page).open();
             }
         }
     }
-    }
+            }
