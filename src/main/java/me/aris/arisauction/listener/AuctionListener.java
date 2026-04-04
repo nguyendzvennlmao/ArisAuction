@@ -16,11 +16,46 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class AuctionListener implements Listener {
     private final ArisAuction plugin;
+    private final Map<UUID, AuctionGUI> openAuctionGUIs;
+    private final Map<UUID, YourItemsGUI> openYourItemsGUIs;
+    private final Map<UUID, TransactionsGUI> openTransactionsGUIs;
+    private final Map<UUID, ConfirmSellGUI> openConfirmSellGUIs;
 
     public AuctionListener(ArisAuction plugin) {
         this.plugin = plugin;
+        this.openAuctionGUIs = new HashMap<>();
+        this.openYourItemsGUIs = new HashMap<>();
+        this.openTransactionsGUIs = new HashMap<>();
+        this.openConfirmSellGUIs = new HashMap<>();
+    }
+
+    public void registerAuctionGUI(Player player, AuctionGUI gui) {
+        openAuctionGUIs.put(player.getUniqueId(), gui);
+    }
+
+    public void registerYourItemsGUI(Player player, YourItemsGUI gui) {
+        openYourItemsGUIs.put(player.getUniqueId(), gui);
+    }
+
+    public void registerTransactionsGUI(Player player, TransactionsGUI gui) {
+        openTransactionsGUIs.put(player.getUniqueId(), gui);
+    }
+
+    public void registerConfirmSellGUI(Player player, ConfirmSellGUI gui) {
+        openConfirmSellGUIs.put(player.getUniqueId(), gui);
+    }
+
+    public void unregisterGUI(Player player) {
+        openAuctionGUIs.remove(player.getUniqueId());
+        openYourItemsGUIs.remove(player.getUniqueId());
+        openTransactionsGUIs.remove(player.getUniqueId());
+        openConfirmSellGUIs.remove(player.getUniqueId());
     }
 
     private boolean isAuctionGui(String title) {
@@ -41,18 +76,16 @@ public class AuctionListener implements Listener {
                 player.setItemOnCursor(null);
             }
 
-            if (title.contains("AUCTION")) {
-                AuctionGUI gui = new AuctionGUI(plugin, player, 1, "Recently Listed");
-                gui.handleClick(event);
-            } else if (title.contains("My Items")) {
-                YourItemsGUI gui = new YourItemsGUI(plugin, player, 1);
-                gui.handleClick(event);
-            } else if (title.contains("Transactions")) {
-                TransactionsGUI gui = new TransactionsGUI(plugin, player, 1);
-                gui.handleClick(event);
-            } else if (title.contains("CONFIRM")) {
-                ConfirmSellGUI gui = new ConfirmSellGUI(plugin, player, null, 0);
-                gui.handleClick(event);
+            UUID uuid = player.getUniqueId();
+
+            if (title.contains("AUCTION") && openAuctionGUIs.containsKey(uuid)) {
+                openAuctionGUIs.get(uuid).handleClick(event);
+            } else if (title.contains("My Items") && openYourItemsGUIs.containsKey(uuid)) {
+                openYourItemsGUIs.get(uuid).handleClick(event);
+            } else if (title.contains("Transactions") && openTransactionsGUIs.containsKey(uuid)) {
+                openTransactionsGUIs.get(uuid).handleClick(event);
+            } else if (title.contains("CONFIRM") && openConfirmSellGUIs.containsKey(uuid)) {
+                openConfirmSellGUIs.get(uuid).handleClick(event);
             }
 
             new BukkitRunnable() {
@@ -101,4 +134,4 @@ public class AuctionListener implements Listener {
             plugin.getAuctionManager().handleSortCommand(player, new String[0]);
         }
     }
-                  }
+            }
